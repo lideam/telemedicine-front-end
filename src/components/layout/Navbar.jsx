@@ -1,43 +1,102 @@
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <nav className="bg-white shadow-md p-4">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav className="bg-white shadow-md fixed w-full z-50 top-0">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold text-blue-600">
+        <Link to="/" className="text-3xl font-bold text-blue-600">
           TeleMedicine
         </Link>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex space-x-6">
-          <Link to="/" className="hover:text-blue-600">
+        {/* Desktop Menu */}
+        <div className="hidden md:flex space-x-8 text-lg">
+          <Link to="/" className="text-gray-700 hover:text-blue-600 transition">
             Home
           </Link>
-          <Link to="/about" className="hover:text-blue-600">
+          <Link
+            to="/about"
+            className="text-gray-700 hover:text-blue-600 transition"
+          >
             About
           </Link>
-          <Link to="/services" className="hover:text-blue-600">
+          <Link
+            to="/services"
+            className="text-gray-700 hover:text-blue-600 transition"
+          >
             Services
           </Link>
-          <Link to="/contact" className="hover:text-blue-600">
+          <Link
+            to="/contact"
+            className="text-gray-700 hover:text-blue-600 transition"
+          >
             Contact
           </Link>
         </div>
 
-        {/* Auth Buttons */}
-        <div className="hidden md:flex space-x-4">
-          <Link to="/login" className="px-4 py-2 border rounded text-blue-600">
-            Login
+        {/* CTA Button */}
+        <div className="hidden md:block">
+          <Link
+            to="/signup"
+            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition"
+          >
+            Get Started
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-gray-700"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <FaTimes size={28} /> : <FaBars size={28} />}
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-white shadow-md absolute top-full left-0 w-full flex flex-col items-center py-4">
+          <Link
+            to="/"
+            className="py-2 text-gray-700 hover:text-blue-600 transition"
+            onClick={() => setIsOpen(false)}
+          >
+            Home
+          </Link>
+          <Link
+            to="/about"
+            className="py-2 text-gray-700 hover:text-blue-600 transition"
+            onClick={() => setIsOpen(false)}
+          >
+            About
+          </Link>
+          <Link
+            to="/services"
+            className="py-2 text-gray-700 hover:text-blue-600 transition"
+            onClick={() => setIsOpen(false)}
+          >
+            Services
+          </Link>
+          <Link
+            to="/contact"
+            className="py-2 text-gray-700 hover:text-blue-600 transition"
+            onClick={() => setIsOpen(false)}
+          >
+            Contact
           </Link>
           <Link
             to="/signup"
-            className="px-4 py-2 bg-blue-600 text-white rounded"
+            className="mt-3 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition"
+            onClick={() => setIsOpen(false)}
           >
-            Sign Up
+            Get Started
           </Link>
         </div>
-      </div>
+      )}
     </nav>
   );
 };

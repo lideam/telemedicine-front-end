@@ -1,12 +1,22 @@
-import Navbar from "../components/layout/Navbar";
+import Navbar from "../components/layout/Navbar"; // Updated path
+import Hero from "../sections/Hero";
+import About from "../sections/About";
+import HowItWorks from "../sections/HowItWorks";
+import Services from "../sections/Services";
+// import Features from "../sections/Features";
+import CTA from "../sections/CTA";
+import Footer from "../components/layout/Footer"; // Updated path
 
 const Home = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen flex items-center justify-center">
-        <h1 className="text-3xl font-bold">Welcome to TeleMedicine</h1>
-      </div>
+      <Hero />
+      <About />
+      <HowItWorks />
+      <Services />
+      <CTA />
+      <Footer />
     </>
   );
 };
