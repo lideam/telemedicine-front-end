@@ -3,8 +3,15 @@ import Home from "../pages/Home";
 import About from "../pages/About";
 import Services from "../pages/Services";
 import Contact from "../pages/Contact";
-import Login from "../pages/Login";
-import Signup from "../pages/Signup";
+import PatientAuth from "../pages/patient/PatientAuth";
+import DoctorLogin from "../pages/DoctorLogin";
+import PatientDashboard from "../pages/patient/PatientDashboard";
+import DoctorDashboard from "../pages/DoctorDashboard";
+import ProfilePage from "../pages/patient/ProfilePage";
+import AppointmentsPage from "../pages/patient/AppointmentsPage";
+import MessagesPage from "../pages/patient/MessagesPage ";
+import VideoCallPage from "../pages/patient/VideoCallPage";
+import PaymentPage from "../pages/patient/PaymentPage ";
 
 const AppRoutes = () => {
   return (
@@ -14,8 +21,15 @@ const AppRoutes = () => {
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/patient-auth" element={<PatientAuth />} />
+        <Route path="/doctor-login" element={<DoctorLogin />} />
+        <Route path="/patient-dashboard" element={<PatientDashboard />} />
+        <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/messages" element={<MessagesPage />} />
+        <Route path="/video-call/:appointmentId" element={<VideoCallPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
       </Routes>
     </Router>
   );

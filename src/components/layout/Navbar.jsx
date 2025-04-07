@@ -38,13 +38,19 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* CTA Button */}
-        <div className="hidden md:block">
+        {/* Authentication Buttons */}
+        <div className="hidden md:flex space-x-4">
           <Link
-            to="/signup"
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition"
+            to="/patient-auth"
+            className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition"
           >
-            Get Started
+            Patient Login / Sign Up
+          </Link>
+          <Link
+            to="/doctor-login"
+            className="px-5 py-2 border border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition"
+          >
+            Doctor Login
           </Link>
         </div>
 
@@ -89,11 +95,18 @@ const Navbar = () => {
             Contact
           </Link>
           <Link
-            to="/signup"
-            className="mt-3 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition"
-            onClick={() => setIsOpen(false)}
+            to="/patient-auth"
+            onClick={() => (window.location.href = "/patient-auth")}
+            className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-2xl shadow-md hover:bg-blue-600 transition-all duration-300"
           >
-            Get Started
+            Patient Login / Sign Up
+          </Link>
+          <Link
+            to="/doctor-login"
+            onClick={() => (window.location.href = "/doctor-login")}
+            className="px-6 py-3 border-2 border-blue-500 text-blue-500 font-semibold rounded-2xl hover:bg-blue-500 hover:text-white transition-all duration-300"
+          >
+            Doctor Login
           </Link>
         </div>
       )}
