@@ -5,10 +5,10 @@ const CTA = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative text-white py-16 px-6 bg-cover bg-center flex items-center">
+    <section className="relative text-white py-16 px-6 bg-cover bg-center flex items-center ">
       {/* Dark Overlay */}
       <div
-        className="absolute inset-0 bg-black opacity-100"
+        className="absolute inset-0 bg-black opacity-100 "
         style={{
           backgroundImage:
             "url('https://plus.unsplash.com/premium_photo-1661627175396-55247897e9bf?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",

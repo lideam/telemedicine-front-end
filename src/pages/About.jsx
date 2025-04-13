@@ -46,7 +46,8 @@ const AboutUs = () => {
         </div>
 
         {/* Mission & Vision Section */}
-        <div className="py-16 px-6 text-center bflex flex-col items-center p-6 bg-blue-50 rounded-lg mb-16">
+        <div className="w-1/2 h-1 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 mx-auto my-10 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.4)]" />
+        <div className="py-16 px-6 text-center bflex flex-col items-center p-6 bg-gray-50 rounded-lg mb-16">
           <div className="max-w-3xl mx-auto space-y-8">
             <motion.div
               className="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transition-all"
@@ -79,7 +80,8 @@ const AboutUs = () => {
         </div>
 
         {/* Core Values */}
-        <div className="py-16 px-6 text-center flex flex-col items-center p-6 bg-blue-50 rounded-lg mb-16">
+        <div className="w-1/2 h-1 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 mx-auto my-10 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.4)]" />
+        <div className="py-16 px-6 text-center flex flex-col items-center p-6 bg-gray-50 rounded-lg mb-16">
           <h3 className="text-4xl font-semibold text-black mb-8">
             Our Core Values
           </h3>
@@ -125,6 +127,7 @@ const AboutUs = () => {
         </div>
 
         {/* Meet the Team */}
+        <div className="w-1/2 h-1 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 mx-auto my-10 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.4)]" />
         <div className="py-16 px-6 text-center mb-10">
           <h3 className="text-4xl font-semibold text-gray-800 mb-6">
             Meet Our Team

@@ -47,7 +47,8 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-16 px-6 bg-gray-50">
+    <section className="py-10 px-6 bg-gray-50">
+      <div className="w-1/2 h-1 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 mx-auto my-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.4)]" />
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold text-gray-800">How It Works</h2>
         <p className="text-xl text-gray-600 mt-4">

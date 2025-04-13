@@ -99,7 +99,7 @@ const Services = () => {
       </div>
       <div className="max-w-7xl mx-auto grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-8">
         {services.map((service, index) => (
-          <div key={index} onClick={() => toggleExpand(index)} className={`flex flex-col items-center p-6 bg-blue-50 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer ${expandedIndex === index ? "bg-blue-100" : ""}`}>
+          <div key={index} onClick={() => toggleExpand(index)} className={`flex flex-col items-center p-6 bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105 cursor-pointer ${expandedIndex === index ? "bg-blue-100" : ""}`}>
             <div className="w-full h-48 overflow-hidden rounded-lg mb-4">
               <img src={service.icon} alt={service.title} className="w-full h-full object-cover" />
             </div>

@@ -23,7 +23,8 @@ const Services = () => {
   ];
 
   return (
-    <section className="py-16 px-6 bg-white">
+    <section className="py-10 px-6 bg-gray-50">
+      <div className="w-1/2 h-1 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 mx-auto my-20 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.4)]" />
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold text-gray-800">Our Services</h2>
         <p className="text-xl text-gray-600 mt-4">
@@ -37,7 +38,7 @@ const Services = () => {
         {services.map((service, index) => (
           <div
             key={index}
-            className="flex flex-col items-center p-6 bg-blue-50 rounded-lg shadow-lg hover:shadow-xl transition-all"
+            className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105"
           >
             <div className="w-full h-48 overflow-hidden rounded-lg mb-4">
               <img
@@ -53,6 +54,15 @@ const Services = () => {
           </div>
         ))}
       </div>
+     <div className="flex justify-end mt-3">
+  <a
+    href="/services"
+    className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-2xl shadow-lg hover:bg-blue-600 transition text-sm"
+  >
+    See More
+  </a>
+</div>
+
     </section>
   );
 };

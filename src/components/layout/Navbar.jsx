@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaBars, FaTimes } from "react-icons/fa";
+import logo from "../../assets/images/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,12 +10,18 @@ const Navbar = () => {
     <nav className="bg-white shadow-md fixed w-full z-50 top-0">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link to="/" className="text-3xl font-bold text-blue-600">
-          TeleMedicine
-        </Link>
+        <div className="flex items-center space-x-4">
+          {/* Logo */}
+          <img src={logo} alt="Logo" className="h-7 w-auto" />
+
+          {/* Website Name */}
+          <Link to="/" className="text-3xl font-bold text-blue-600">
+            TeleMedicine
+          </Link>
+        </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-8 text-lg">
+        <div className="hidden md:flex space-x-5 text-lg">
           <Link to="/" className="text-gray-700 hover:text-blue-600 transition">
             Home
           </Link>
@@ -29,6 +36,12 @@ const Navbar = () => {
             className="text-gray-700 hover:text-blue-600 transition"
           >
             Services
+          </Link>
+          <Link
+            to="/tips"
+            className="text-gray-700 hover:text-blue-600 transition"
+          >
+            Tips
           </Link>
           <Link
             to="/contact"
