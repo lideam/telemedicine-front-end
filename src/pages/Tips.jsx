@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { categories, tipsData } from "../components/Data/data";
-import Navbar from "../components/layout/Navbar"; // Updated path
-import Footer from "../components/layout/Footer"; // Updated path
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 
 export default function HealthTipsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -17,7 +17,7 @@ export default function HealthTipsPage() {
   const visibleTips = filteredTips.slice(0, visibleCount);
 
   return (
-    <div className="min-h-screen flex flex-col ">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="min-h-screen bg-gray-50 flex py-20">
         {/* Sidebar */}
@@ -46,7 +46,7 @@ export default function HealthTipsPage() {
 
         {/* Main content */}
         <main className="flex-1 p-6">
-          <h1 className="text-4xl font-bold text-white mb-6 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 p-10 rounded-lg shadow-lg ">
+          <h1 className="text-4xl font-bold text-white mb-6 bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 p-10 rounded-lg shadow-lg">
             Health Tips
           </h1>
 
@@ -58,12 +58,21 @@ export default function HealthTipsPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.05 }}
-                className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105"
               >
-                <h3 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
-                  {tip.title}
-                </h3>
-                <p className="text-gray-600 text-center">{tip.description}</p>
+                {tip.image && (
+                  <img
+                    src={tip.image}
+                    alt={tip.title}
+                    className="h-48 w-full object-cover"
+                  />
+                )}
+                <div className="p-5">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+                    {tip.title}
+                  </h3>
+                  <p className="text-gray-600 text-center">{tip.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>

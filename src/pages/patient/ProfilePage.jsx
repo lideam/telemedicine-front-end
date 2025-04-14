@@ -29,8 +29,24 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePersonalInfoChange = (e) => {
+    const { name, value } = e.target;
+    setPersonalInfo((prevInfo) => ({
+      ...prevInfo,
+      [name]: value,
+    }));
+  };
+
+  const handleHealthInfoChange = (e) => {
+    const { name, value } = e.target;
+    setHealthInfo((prevInfo) => ({
+      ...prevInfo,
+      [name]: value,
+    }));
+  };
+
   const handleSaveChanges = () => {
-    // Handle saving changes here
+    // Handle saving changes here (e.g., make API call)
     alert("Changes saved successfully!");
   };
 
@@ -40,8 +56,6 @@ const ProfilePage = () => {
       <PatientNav /> {/* PatientNav component added here */}
       {/* Content Section */}
       <div className="pt-20">
-        {" "}
-        {/* Adjust padding top to ensure content starts below the fixed nav */}
         {/* Header Section */}
         <div className="bg-white shadow-lg p-6 mb-8">
           <div className="max-w-6xl mx-auto">
@@ -94,54 +108,60 @@ const ProfilePage = () => {
                 <label className="block text-gray-600">Full Name</label>
                 <input
                   type="text"
+                  name="name"
                   value={personalInfo.name}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-gray-600">Date of Birth</label>
                 <input
                   type="date"
+                  name="dob"
                   value={personalInfo.dob}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-gray-600">Gender</label>
                 <input
                   type="text"
+                  name="gender"
                   value={personalInfo.gender}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-gray-600">Email</label>
                 <input
                   type="email"
+                  name="email"
                   value={personalInfo.email}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-gray-600">Phone</label>
                 <input
                   type="text"
+                  name="phone"
                   value={personalInfo.phone}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div className="col-span-2">
                 <label className="block text-gray-600">Address</label>
                 <input
                   type="text"
+                  name="address"
                   value={personalInfo.address}
+                  onChange={handlePersonalInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
             </div>
@@ -156,9 +176,10 @@ const ProfilePage = () => {
               <div>
                 <label className="block text-gray-600">Medical History</label>
                 <textarea
+                  name="medicalHistory"
                   value={healthInfo.medicalHistory}
+                  onChange={handleHealthInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
@@ -166,17 +187,19 @@ const ProfilePage = () => {
                   Current Medications
                 </label>
                 <textarea
+                  name="currentMedications"
                   value={healthInfo.currentMedications}
+                  onChange={handleHealthInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-gray-600">Allergies</label>
                 <textarea
+                  name="allergies"
                   value={healthInfo.allergies}
+                  onChange={handleHealthInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
@@ -184,9 +207,10 @@ const ProfilePage = () => {
                   Family Medical History
                 </label>
                 <textarea
+                  name="familyHistory"
                   value={healthInfo.familyHistory}
+                  onChange={handleHealthInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
               <div>
@@ -194,9 +218,10 @@ const ProfilePage = () => {
                   Vaccination Records
                 </label>
                 <textarea
+                  name="vaccinations"
                   value={healthInfo.vaccinations}
+                  onChange={handleHealthInfoChange}
                   className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                  readOnly
                 />
               </div>
             </div>
