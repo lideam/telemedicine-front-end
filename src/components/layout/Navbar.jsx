@@ -10,12 +10,14 @@ const Navbar = () => {
     <nav className="bg-white shadow-md fixed w-full z-50 top-0">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center space-x-4">
+        <div className=" space-x-4">
           {/* Logo */}
-          <img src={logo} alt="Logo" className="h-7 w-auto" />
-
-          {/* Website Name */}
-          <Link to="/" className="text-3xl font-bold text-blue-600">
+          <Link
+            to="/"
+            className="text-3xl flex items-center gap-4 font-bold text-blue-600"
+          >
+            <img src={logo} alt="Logo" className="h-7 w-auto" />
+            {/* Website Name */}
             TeleMedicine
           </Link>
         </div>

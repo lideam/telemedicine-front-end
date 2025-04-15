@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
 
 const AppointmentsPage = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors] = useState([
     {
@@ -13,7 +15,7 @@ const AppointmentsPage = () => {
       clinic: "Addis Heart Center",
       bio: "Experienced in treating cardiovascular diseases and performing diagnostic tests.",
       image: "https://randomuser.me/api/portraits/men/32.jpg",
-      amount: 300, // ETB
+      amount: 300,
       availableSlots: [
         { date: "2025-04-20", time: "10:00 AM" },
         { date: "2025-04-21", time: "2:00 PM" },
@@ -54,8 +56,8 @@ const AppointmentsPage = () => {
       date: selectedSlot.date,
       time: selectedSlot.time,
       amount: selectedDoctor.amount,
-      status: "Pending", // Initially set as pending
-      paymentStatus: "Paid", // Assume payment is made when scheduling
+      status: "Pending", // Can later be updated to "Confirmed"
+      paymentStatus: "Paid",
     };
 
     setPendingAppointment(newAppointment);
@@ -82,16 +84,21 @@ const AppointmentsPage = () => {
         doctors.find((doc) => doc.name === appointment.doctorName)
       );
       setSelectedSlot({ date: appointment.date, time: appointment.time });
-      setShowPaymentModal(true); // Allow rescheduling without asking for payment
+      setShowPaymentModal(true);
     } else {
       alert("Appointment is not eligible for rescheduling.");
     }
   };
 
+  const handleGoToChat = () => {
+    navigate("/chats");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="flex min-h-screen bg-gray-50 relative">
       <PatientNav />
-      <div className="pt-20 max-w-6xl mx-auto p-6 space-y-8">
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
+      
         {/* Available Doctors */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-2xl font-bold mb-6 text-gray-800">
@@ -197,13 +204,33 @@ const AppointmentsPage = () => {
                 <p>
                   <strong>Fee:</strong> {appointment.amount} ETB
                 </p>
-                <p className="text-yellow-600">
+                <p
+                  className={`font-semibold ${
+                    appointment.status === "Confirmed"
+                      ? "text-green-600"
+                      : "text-yellow-600"
+                  }`}
+                >
                   <strong>Status:</strong> {appointment.status}
                 </p>
+
+                {/* Conditionally active/inactive chat button */}
+                <button
+                  onClick={handleGoToChat}
+                  disabled={appointment.status !== "Confirmed"}
+                  className={`mt-2 px-6 py-2 rounded-lg text-white transition-all ${
+                    appointment.status === "Confirmed"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Go to Chat
+                </button>
+
                 {appointment.status === "Declined" && (
                   <button
                     onClick={() => handleReschedule(appointment.id)}
-                    className="mt-2 text-blue-600 underline"
+                    className="mt-2 text-blue-600 underline block"
                   >
                     Reschedule Appointment (Payment Retained)
                   </button>
@@ -212,7 +239,7 @@ const AppointmentsPage = () => {
             ))
           )}
         </div>
-      </div>
+     
 
       {/* Payment Modal */}
       {showPaymentModal && pendingAppointment && (
@@ -256,6 +283,7 @@ const AppointmentsPage = () => {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 };

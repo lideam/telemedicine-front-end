@@ -16,24 +16,25 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { name: "Dashboard", icon: <Home size={20} />, path: "/patient-dashboard" },
+  { name: "Dashboard", icon: <Home size={20} />, path: "/doctor-dashboard" },
   {
     name: "Appointments",
     icon: <Calendar size={20} />,
-    path: "/patient-appointments",
+    path: "/doctor-appointments",
   },
   {
-    name: "Chat",
+    name: "Chats",
     icon: <MessageSquare size={20} />,
-    path: "/patient-chats",
+    path: "/doctor-chats",
   },
-  { name: "Health-Records", icon: <Users size={20} />, path: "/patient-health-records" },
+  { name: "Patients", icon: <Users size={20} />, path: "/doctor/patients" },
+  { name: "My Schedule", icon: <Clock size={20} />, path: "/doctor/schedule" },
   {
     name: "Payments",
     icon: <DollarSign size={20} />,
-    path: "/patient-payments",
+    path: "/doctor/payments",
   },
-  { name: "Profile", icon: <UserCog size={20} />, path: "/patient-profile" },
+  { name: "Profile", icon: <UserCog size={20} />, path: "/doctor/profile" },
   {
     name: "Notifications",
     icon: <Bell size={20} />,
@@ -47,15 +48,14 @@ const DoctorNav = () => {
   const location = useLocation();
 
   return (
-    <div className="w-64 h-screen fixed top-0 left-0 z-50 bg-white shadow-lg p-4 pt-8 border-r border-gray-200">
-
+    <div className="w-64 min-h-screen bg-white shadow-lg p-4 pt-8 border-r border-gray-200">
       {/* <div className="text-2xl font-bold text-blue-600 mb-6 pl-4">
         Telemedicine
       </div> */}
       <div className="flex items-center space-x-4 mb-6">
         {/* Logo */}
         <Link
-          to="/patient-dashboard"
+          to="/doctor-dashboard"
           className="text-2xl font-bold text-blue-600 flex items-center gap-4"
         >
           <img src={logo} alt="Logo" className="h-7 w-auto" />
@@ -81,12 +81,15 @@ const DoctorNav = () => {
       </nav>
 
       <div className="mt-8 border-t pt-4">
-        <Link
-        to="/"
-         className="flex items-center gap-3 text-red-600 hover:text-red-700 transition px-3 py-2 rounded-lg">
+        <button
+          onClick={() => {
+            // TODO: Add logout logic
+          }}
+          className="flex items-center gap-3 text-red-600 hover:text-red-700 transition px-3 py-2 rounded-lg"
+        >
           <LogOut size={20} />
           Logout
-          </Link>
+        </button>
       </div>
     </div>
   );

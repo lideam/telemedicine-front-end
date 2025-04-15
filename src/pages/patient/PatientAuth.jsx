@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../../assets/images/logo.png";
+import { Link } from "react-router-dom";
 
 const PatientAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -35,16 +37,19 @@ const PatientAuth = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
+  <header className="bg-white shadow-sm py-3 px-6 mb-2">
+    <div className="max-w-7xl mx-auto flex justify-center items-center">
+      {/* Logo / Site Name */}
+      <Link to="/" className="flex items-center gap-2 text-blue-600 font-bold text-xl">
+        <img src={logo} alt="Logo" className="h-6 w-auto" />
+        TeleMedicine
+      </Link>
+    </div>
+  </header>
+
       <div className="flex flex-1 w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Left Side - Form */}
         <div className="w-1/2 p-8 flex flex-col justify-center">
-          <div className="text-center mb-6">
-            <img
-              src="https://media.istockphoto.com/id/1169345592/vector/telemedicine-gradient-flat-icon-stethoscope-with-speech-bubble-on-screen-of-smartphone.jpg?s=612x612&w=0&k=20&c=SK_VTdYtB5bOsERbFZJe6eDuHlK1pnnpMmGQo_UxWRw=" // Replace with your logo
-              alt="Logo"
-              className="mx-auto h-12"
-            />
-          </div>
           <h2 className="text-3xl font-bold text-blue-600 text-center mb-6">
             {isLogin ? "Patient Login" : "Patient Sign Up"}
           </h2>
@@ -154,7 +159,7 @@ const PatientAuth = () => {
       </div>
 
       {/* Footer */}
-      <footer className="w-full bg-gray-800 text-white py-4">
+      <footer className="w-full bg-gray-800 text-center mt-2 text-white py-3">
         <div className="text-center">
           <p>&copy; 2025 HealthCare Inc. All rights reserved.</p>
         </div>
