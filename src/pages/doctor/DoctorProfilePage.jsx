@@ -1,24 +1,17 @@
 import { useState } from "react";
-import { FaCamera, FaSave, FaEdit, FaUser } from "react-icons/fa";
-import PatientNav from "../../components/layout/PatientNav";
+import { FaCamera, FaSave, FaEdit } from "react-icons/fa";
+import DoctorNav from "../../components/layout/DoctorNav";
 
-
-const ProfilePage = () => {
-  const [personalInfo, setPersonalInfo] = useState({
-    name: "John Doe",
-    dob: "1990-05-14",
-    gender: "Male",
-    email: "johndoe@example.com",
-    phone: "+1 234 567 890",
-    address: "123 Main St, City, State, 12345",
-  });
-
-  const [healthInfo] = useState({
-    medicalHistory: "Asthma, Hypertension",
-    currentMedications: "Albuterol, Lisinopril",
-    allergies: "Peanuts, Pollen",
-    familyHistory: "Diabetes, Heart Disease",
-    vaccinations: "Flu, COVID-19",
+const DoctorProfilePage = () => {
+  const [doctorInfo, setDoctorInfo] = useState({
+    name: "Dr. John Doe",
+    specialty: "Cardiologist",
+    bio: "Experienced cardiologist with over 15 years of practice specializing in heart disease management.",
+    yearsOfExperience: 15,
+    clinicName: "HeartCare Clinic",
+    clinicLocation: "123 Heart Ave, Addis Ababa, Ethiopia",
+    phone: "+251 911 234 567",
+    email: "johndoe@heartcare.com",
   });
 
   const [profilePic, setProfilePic] = useState(null);
@@ -31,11 +24,9 @@ const ProfilePage = () => {
     }
   };
 
-  const handleInputChange = (e, section, field) => {
+  const handleInputChange = (e, field) => {
     const value = e.target.value;
-    if (section === "personal") {
-      setPersonalInfo({ ...personalInfo, [field]: value });
-    }
+    setDoctorInfo({ ...doctorInfo, [field]: value });
   };
 
   const handleSaveChanges = () => {
@@ -53,23 +44,24 @@ const ProfilePage = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <PatientNav />
-      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-      <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg  items-center flex gap-5">
-          <FaUser className="text-blue-600 text-4xl" />
-          <div><h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            View and manage your personal and health information
+      <DoctorNav />
+      <main className="flex-1 p-6 pt-0 overflow-y-auto  space-y-6">
+        <div className="bg-white shadow-md p-6 -ml-6 -mr-6 mb-8   mx-auto">
+          <h1 className="text-3xl font-bold text-blue-800 mb-1">My Profile</h1>
+          <p className="text-sm text-gray-500">
+            View and manage your personal and professional information
           </p>
-          </div>
-        </section>
+        </div>
 
-        <div className="max-w-6xl mx-auto px-6 space-y-10 pb-20">
+        <div className=" mx-auto px-6 space-y-10 pb-20">
           {/* Profile Picture */}
           <div className="flex items-center space-x-6">
             <div className="relative">
               <img
-                src={profilePic || "https://via.placeholder.com/150"}
+                src={
+                  profilePic ||
+                  "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=600"
+                }
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-blue-600 shadow-md"
               />
@@ -89,10 +81,11 @@ const ProfilePage = () => {
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-gray-800">
-                {personalInfo.name}
+                {doctorInfo.name}
               </h2>
-              <p className="text-gray-500">{personalInfo.email}</p>
-              <p className="text-gray-500">{personalInfo.phone}</p>
+              <p className="text-gray-500">{doctorInfo.specialty}</p>
+              <p className="text-gray-500">{doctorInfo.email}</p>
+              <p className="text-gray-500">{doctorInfo.phone}</p>
             </div>
           </div>
 
@@ -104,21 +97,26 @@ const ProfilePage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 ["Full Name", "name", "text"],
-                ["Date of Birth", "dob", "date"],
-                ["Gender", "gender", "text"],
+                ["Specialty", "specialty", "text"],
+                ["Years of Experience", "yearsOfExperience", "number"],
                 ["Email", "email", "email"],
                 ["Phone", "phone", "text"],
-                ["Address", "address", "text"],
+                ["Clinic Name", "clinicName", "text"],
+                ["Clinic Location", "clinicLocation", "text"],
               ].map(([label, key, type]) => (
                 <div
                   key={key}
-                  className={key === "address" ? "col-span-2" : ""}
+                  className={
+                    key === "clinicLocation" || key === "clinicName"
+                      ? "col-span-2"
+                      : ""
+                  }
                 >
                   <label className="block text-gray-600">{label}</label>
                   <input
                     type={type}
-                    value={personalInfo[key]}
-                    onChange={(e) => handleInputChange(e, "personal", key)}
+                    value={doctorInfo[key]}
+                    onChange={(e) => handleInputChange(e, key)}
                     className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
                     readOnly={!isEditing}
                   />
@@ -127,28 +125,19 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Health Info */}
+          {/* Bio */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-xl font-semibold text-blue-700 mb-4">
-              Health Information
+              Professional Bio
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                ["Medical History", "medicalHistory"],
-                ["Current Medications", "currentMedications"],
-                ["Allergies", "allergies"],
-                ["Family Medical History", "familyHistory"],
-                ["Vaccination Records", "vaccinations"],
-              ].map(([label, key]) => (
-                <div key={key}>
-                  <label className="block text-gray-600">{label}</label>
-                  <textarea
-                    value={healthInfo[key]}
-                    className="w-full p-3 mt-2 border rounded-lg bg-gray-100 text-gray-700"
-                    readOnly
-                  />
-                </div>
-              ))}
+            <div>
+              <label className="block text-gray-600">Bio</label>
+              <textarea
+                value={doctorInfo.bio}
+                onChange={(e) => handleInputChange(e, "bio")}
+                className="w-full p-3 mt-2 border rounded-lg bg-gray-100"
+                readOnly={!isEditing}
+              />
             </div>
           </div>
 
@@ -184,4 +173,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default DoctorProfilePage;

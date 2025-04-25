@@ -103,6 +103,57 @@ const DoctorDashboard = () => {
           ))}
         </div>
 
+        {/* Bar Graphs */}
+        <div className="bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Earnings Bar Chart */}
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Earnings
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={statsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="earnings" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Patients Bar Chart */}
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Patients
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={statsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="patients" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Appointments Bar Chart */}
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Appointments
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={statsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="appointments" fill="#f59e0b" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         {/* Appointments + Calendar */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Appointments Table */}
@@ -112,7 +163,7 @@ const DoctorDashboard = () => {
                 Upcoming Appointments
               </h2>
               <Link
-                to="/doctor-appointments"
+                to="/doctor/doctor-appointments"
                 className="text-sm text-blue-600 hover:underline"
               >
                 View All
@@ -191,57 +242,6 @@ const DoctorDashboard = () => {
               <h3 className="text-2xl font-bold text-gray-800">$2,450.00</h3>
             </div>
             <DollarSign size={32} className="text-green-600" />
-          </div>
-        </div>
-
-        {/* Bar Graphs */}
-        <div className="bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Earnings Bar Chart */}
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Earnings
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={statsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="earnings" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Patients Bar Chart */}
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Patients
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={statsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="patients" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Appointments Bar Chart */}
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Appointments
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={statsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="appointments" fill="#f59e0b" />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         </div>
       </main>

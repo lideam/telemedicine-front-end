@@ -102,11 +102,12 @@ const ChatPage = () => {
 
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Header */}
-        <div className="bg-white px-6 py-4 flex items-center justify-between shadow">
-          <div className="flex items-center space-x-4">
+        {/* <div className="bg-white px-6 py-4 flex items-center justify-between shadow"> */}
+        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
+          {/* <div className="flex items-center space-x-4"> */}
             <FaUserMd className="text-blue-500 text-3xl" />
             <div>
-              <h2 className="text-lg font-bold text-gray-800">
+              <h2 className="text-3xl font-bold text-gray-800">
                 {selectedConversation
                   ? selectedConversation.doctorName
                   : "Select a Doctor"}
@@ -115,7 +116,8 @@ const ChatPage = () => {
                 {selectedConversation ? selectedConversation.specialty : ""}
               </p>
             </div>
-          </div>
+          {/* </div> */}
+          </section>
 
           {selectedConversation &&
             !isAppointmentTimeReached(selectedConversation.appointmentTime) && (
@@ -136,7 +138,7 @@ const ChatPage = () => {
                 Video Call
               </button>
             )}
-        </div>
+        {/* </div> */}
 
         {/* Chat Section */}
         {selectedConversation && (

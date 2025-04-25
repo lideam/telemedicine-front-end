@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaSave } from "react-icons/fa";
+import { FaSave, FaNotesMedical } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
 
 const ProfilePage = () => {
@@ -65,13 +65,17 @@ const ProfilePage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <PatientNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-          <div className="max-w-5xl mx-auto bg-white p-10 rounded-3xl shadow-2xl">
-            <h1 className="text-3xl font-bold text-blue-800 mb-6 text-center">Health Information</h1>
+          <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
+          <FaNotesMedical className="text-blue-600 text-4xl" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Health Information</h1>
 
-            <p className="text-sm text-gray-500 text-center mb-6">
+            <p className="text-sm text-gray-500 mt-1">
               If any section does not apply to you, please choose <strong>"None"</strong>.
             </p>
-
+            </div>
+</section>
+          <div className="max-w-5xl mx-auto bg-white p-10 rounded-3xl shadow-2xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {Object.entries(options).map(([key, values]) => (
                 <div key={key}>

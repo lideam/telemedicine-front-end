@@ -37,10 +37,10 @@ const navItems = [
   {
     name: "Notifications",
     icon: <Bell size={20} />,
-    path: "/doctor/notifications",
+    path: "/patient-notification",
   },
-  { name: "Reviews", icon: <Star size={20} />, path: "/doctor/reviews" },
-  { name: "Support", icon: <HelpCircle size={20} />, path: "/doctor/support" },
+  { name: "Reviews", icon: <Star size={20} />, path: "/review" },
+  { name: "Support", icon: <HelpCircle size={20} />, path: "/patient-support" },
 ];
 
 const DoctorNav = () => {

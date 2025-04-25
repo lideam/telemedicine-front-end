@@ -77,12 +77,6 @@ const DoctorAppointmentPage = () => {
             <h2 className="text-xl font-semibold text-gray-800">
               Upcoming Appointments
             </h2>
-            <button
-              className="text-sm text-blue-600 hover:underline"
-              onClick={() => navigate("/doctor/appointments")}
-            >
-              View All
-            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-600">

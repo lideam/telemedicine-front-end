@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
+import { FaCalendarAlt } from "react-icons/fa";
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
@@ -98,52 +99,57 @@ const AppointmentsPage = () => {
     <div className="flex min-h-screen bg-gray-50 relative">
       <PatientNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-      
         {/* Available Doctors */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-2xl font-bold mb-6 text-gray-800">
-            Available Doctors
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {doctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                onClick={() => {
-                  setSelectedDoctor(doctor);
-                  setSelectedSlot(null);
-                }}
-                className={`p-4 rounded-lg shadow-md cursor-pointer border transition-transform duration-200 ${
-                  selectedDoctor?.id === doctor.id
-                    ? "bg-blue-100 border-blue-500 scale-105"
-                    : "bg-white"
-                }`}
-              >
-                <img
-                  src={doctor.image}
-                  alt={doctor.name}
-                  className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
-                />
-                <h4 className="text-lg font-bold text-center">{doctor.name}</h4>
-                <p className="text-center text-sm text-gray-600">
-                  {doctor.specialty}
-                </p>
-                <p className="text-center text-sm">
-                  Experience: {doctor.experience}
-                </p>
-                <p className="text-center text-sm">Clinic: {doctor.clinic}</p>
-                <p className="text-center text-sm">
-                  Rating: ⭐ {doctor.rating}
-                </p>
-                <p className="text-center text-sm italic text-gray-500 mt-2">
-                  {doctor.bio}
-                </p>
-                <p className="text-center text-blue-600 font-semibold mt-2">
-                  Fee: {doctor.amount} ETB
-                </p>
-              </div>
-            ))}
+        {/* <div className="bg-white p-6 rounded-lg shadow-md"> */}
+        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
+          <FaCalendarAlt className="text-blue-600 text-4xl" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Available Doctors
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Book an appointment with your preferred doctor
+            </p>
           </div>
+        </section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {doctors.map((doctor) => (
+            <div
+              key={doctor.id}
+              onClick={() => {
+                setSelectedDoctor(doctor);
+                setSelectedSlot(null);
+              }}
+              className={`p-4 rounded-lg shadow-md cursor-pointer border transition-transform duration-200 ${
+                selectedDoctor?.id === doctor.id
+                  ? "bg-blue-100 border-blue-500 scale-105"
+                  : "bg-white"
+              }`}
+            >
+              <img
+                src={doctor.image}
+                alt={doctor.name}
+                className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
+              />
+              <h4 className="text-lg font-bold text-center">{doctor.name}</h4>
+              <p className="text-center text-sm text-gray-600">
+                {doctor.specialty}
+              </p>
+              <p className="text-center text-sm">
+                Experience: {doctor.experience}
+              </p>
+              <p className="text-center text-sm">Clinic: {doctor.clinic}</p>
+              <p className="text-center text-sm">Rating: ⭐ {doctor.rating}</p>
+              <p className="text-center text-sm italic text-gray-500 mt-2">
+                {doctor.bio}
+              </p>
+              <p className="text-center text-blue-600 font-semibold mt-2">
+                Fee: {doctor.amount} ETB
+              </p>
+            </div>
+          ))}
         </div>
+        {/* </div> */}
 
         {/* Select Slot */}
         {selectedDoctor && (
@@ -239,50 +245,49 @@ const AppointmentsPage = () => {
             ))
           )}
         </div>
-     
 
-      {/* Payment Modal */}
-      {showPaymentModal && pendingAppointment && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start pt-24 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              Payment Confirmation
-            </h2>
-            <div className="text-gray-700 mb-4">
-              <p>
-                <strong>Doctor:</strong> {pendingAppointment.doctorName}
-              </p>
-              <p>
-                <strong>Date:</strong> {pendingAppointment.date}
-              </p>
-              <p>
-                <strong>Time:</strong> {pendingAppointment.time}
-              </p>
-              <p>
-                <strong>Amount:</strong>{" "}
-                <span className="text-green-600 font-bold">
-                  {pendingAppointment.amount} ETB
-                </span>
-              </p>
+        {/* Payment Modal */}
+        {showPaymentModal && pendingAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start pt-24 z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+              <h2 className="text-2xl font-bold mb-4 text-center">
+                Payment Confirmation
+              </h2>
+              <div className="text-gray-700 mb-4">
+                <p>
+                  <strong>Doctor:</strong> {pendingAppointment.doctorName}
+                </p>
+                <p>
+                  <strong>Date:</strong> {pendingAppointment.date}
+                </p>
+                <p>
+                  <strong>Time:</strong> {pendingAppointment.time}
+                </p>
+                <p>
+                  <strong>Amount:</strong>{" "}
+                  <span className="text-green-600 font-bold">
+                    {pendingAppointment.amount} ETB
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={handlePayment}
+                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+              >
+                Pay with Chapa
+              </button>
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPendingAppointment(null);
+                }}
+                className="w-full mt-3 text-red-500 text-sm underline"
+              >
+                Cancel
+              </button>
             </div>
-            <button
-              onClick={handlePayment}
-              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-            >
-              Pay with Chapa
-            </button>
-            <button
-              onClick={() => {
-                setShowPaymentModal(false);
-                setPendingAppointment(null);
-              }}
-              className="w-full mt-3 text-red-500 text-sm underline"
-            >
-              Cancel
-            </button>
           </div>
-        </div>
-      )}
+        )}
       </main>
     </div>
   );
