@@ -17,10 +17,10 @@ const PatientAuth = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Reset error state
-    // Simple validation example
+    setError("");
+
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields.");
       return;
@@ -29,23 +29,64 @@ const PatientAuth = () => {
       setError("Full name is required.");
       return;
     }
-    // Here, handle the actual login/signup logic (e.g., API call)
-    console.log("Patient Auth Form Submitted:", formData);
-    // After successful login/signup, navigate to the patient dashboard
-    navigate("/patient-dashboard");
+
+    const url = isLogin
+      ? "http://localhost:5000/api/auth/login"
+      : "http://localhost:5000/api/auth/register";
+
+    const payload = isLogin
+      ? {
+          email: formData.email,
+          password: formData.password,
+          role: "patient",
+        }
+      : {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: "patient", // required for registration
+        };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      // Save user info & token to localStorage
+      localStorage.setItem("userInfo", JSON.stringify(data));
+
+      // Explicitly store the user's role
+      localStorage.setItem("role", "patient");
+
+      // Navigate to patient dashboard
+      navigate("/patient-dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-  <header className="bg-white shadow-sm py-3 px-6 mb-2">
-    <div className="max-w-7xl mx-auto flex justify-center items-center">
-      {/* Logo / Site Name */}
-      <Link to="/" className="flex items-center gap-2 text-blue-600 font-bold text-xl">
-        <img src={logo} alt="Logo" className="h-6 w-auto" />
-        TeleMedicine
-      </Link>
-    </div>
-  </header>
+      <header className="bg-white shadow-sm py-3 px-6 mb-2">
+        <div className="max-w-7xl mx-auto flex justify-center items-center">
+          {/* Logo / Site Name */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-blue-600 font-bold text-xl"
+          >
+            <img src={logo} alt="Logo" className="h-6 w-auto" />
+            TeleMedicine
+          </Link>
+        </div>
+      </header>
 
       <div className="flex flex-1 w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Left Side - Form */}

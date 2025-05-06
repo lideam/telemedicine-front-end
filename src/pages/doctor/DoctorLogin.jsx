@@ -15,17 +15,46 @@ const DoctorAuth = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Reset error state
-    // Simple validation example
+    setError("");
+
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields.");
       return;
     }
-    // Here, handle the actual login logic (e.g., API call)
-    console.log("Doctor Auth Form Submitted:", formData);
-    navigate("/doctor-dashboard"); // Redirect to doctor dashboard after login
+
+    const url = "http://localhost:5000/api/auth/login";
+
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+      role: "doctor",
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      // Save user info & token temporarily
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+
+      // Navigate to doctor dashboard
+      navigate("/doctor-dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (

@@ -27,7 +27,11 @@ const navItems = [
     icon: <MessageSquare size={20} />,
     path: "/patient-chats",
   },
-  { name: "Health-Records", icon: <Users size={20} />, path: "/patient-health-records" },
+  {
+    name: "Health-Records",
+    icon: <Users size={20} />,
+    path: "/patient-health-records",
+  },
   {
     name: "Payments",
     icon: <DollarSign size={20} />,
@@ -43,12 +47,11 @@ const navItems = [
   { name: "Support", icon: <HelpCircle size={20} />, path: "/patient-support" },
 ];
 
-const DoctorNav = () => {
+const PatientNav = () => {
   const location = useLocation();
 
   return (
     <div className="w-64 h-screen fixed top-0 left-0 z-50 bg-white shadow-lg p-4 pt-8 border-r border-gray-200">
-
       {/* <div className="text-2xl font-bold text-blue-600 mb-6 pl-4">
         Telemedicine
       </div> */}
@@ -82,14 +85,15 @@ const DoctorNav = () => {
 
       <div className="mt-8 border-t pt-4">
         <Link
-        to="/"
-         className="flex items-center gap-3 text-red-600 hover:text-red-700 transition px-3 py-2 rounded-lg">
+          to="/"
+          className="flex items-center gap-3 text-red-600 hover:text-red-700 transition px-3 py-2 rounded-lg"
+        >
           <LogOut size={20} />
           Logout
-          </Link>
+        </Link>
       </div>
     </div>
   );
 };
 
-export default DoctorNav;
+export default PatientNav;

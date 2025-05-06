@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaCamera, FaSave, FaEdit } from "react-icons/fa";
+import { FaCamera, FaSave, FaEdit, FaUser } from "react-icons/fa";
 import DoctorNav from "../../components/layout/DoctorNav";
 
 const DoctorProfilePage = () => {
@@ -45,13 +45,15 @@ const DoctorProfilePage = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
-      <main className="flex-1 p-6 pt-0 overflow-y-auto  space-y-6">
-        <div className="bg-white shadow-md p-6 -ml-6 -mr-6 mb-8   mx-auto">
-          <h1 className="text-3xl font-bold text-blue-800 mb-1">My Profile</h1>
-          <p className="text-sm text-gray-500">
-            View and manage your personal and professional information
-          </p>
-        </div>
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
+        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg  items-center flex gap-5">
+                  <FaUser className="text-blue-600 text-3xl" />
+                  <div><h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
+                  <p className="text-sm text-gray-500 mt-1">
+                    View and manage your personal and health information
+                  </p>
+                  </div>
+                </section>
 
         <div className=" mx-auto px-6 space-y-10 pb-20">
           {/* Profile Picture */}

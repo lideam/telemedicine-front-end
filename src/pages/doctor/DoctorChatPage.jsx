@@ -7,6 +7,7 @@ import {
   FaArrowLeft,
   FaCalendarAlt,
   FaHistory,
+  FaComments
 } from "react-icons/fa"; // Import the calendar and history icons
 import DoctorNav from "../../components/layout/DoctorNav";
 
@@ -100,13 +101,16 @@ const DoctorChatPage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
 
-      <main className="flex-1 p-6 pt-0 overflow-y-auto space-y-6">
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Header Section */}
-        <div className="bg-white text-black p-3 pl-6 -ml-6 -mr-6 shadow-md mb-6">
+        <div className="bg-white text-black p-3 pl-6 -ml-6 -mr-6 flex shadow-md items-center mb-6 gap-5">
+        <FaComments className="text-blue-600 text-4xl" />
+        <div>
           <h1 className="text-2xl font-bold">Doctor Consultation Dashboard</h1>
-          <p className="text-lg mt-2">
+          <p className="text-gray-600 mt-1">
             Manage your consultations and chat with patients.
           </p>
+          </div>
         </div>
 
         {/* Patient Selection Header */}

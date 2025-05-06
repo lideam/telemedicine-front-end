@@ -1,58 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminNav from "../../components/layout/AdminNav";
-import {
-  Search,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Pencil,
-  FileDown,
-  PlusCircle,
-} from "lucide-react";
-
-const dummyDoctors = [
-  {
-    id: 1,
-    name: "Dr. Hana Alemu",
-    specialty: "Cardiologist",
-    status: "Pending",
-    email: "hana@example.com",
-    phone: "0912345678",
-    clinic: "Addis Heart Center",
-  },
-  {
-    id: 2,
-    name: "Dr. Meles Teshome",
-    specialty: "Dermatologist",
-    status: "Approved",
-    email: "meles@example.com",
-    phone: "0923456789",
-    clinic: "Derma Clinic",
-  },
-  {
-    id: 3,
-    name: "Dr. Sara Kebede",
-    specialty: "Pediatrician",
-    status: "Rejected",
-    email: "sara@example.com",
-    phone: "0934567890",
-    clinic: "Children’s Health Center",
-  },
-];
+import { Search, FileDown, PlusCircle } from "lucide-react";
 
 const ManageDoctors = () => {
-  const [doctors, setDoctors] = useState(dummyDoctors);
+  const [doctors, setDoctors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
-  const [showViewDoctorModal, setShowViewDoctorModal] = useState(false);
-  const [doctorToView, setDoctorToView] = useState(null);
   const [newDoctor, setNewDoctor] = useState({
     name: "",
     specialty: "",
     email: "",
+    password: "",
     phone: "",
     clinic: "",
   });
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/doctors");
+        const data = await response.json();
+        setDoctors(data);
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const filteredDoctors = doctors.filter(
     (doc) =>
@@ -60,30 +36,59 @@ const ManageDoctors = () => {
       doc.specialty.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleStatusChange = (id, newStatus) => {
-    setDoctors((prev) =>
-      prev.map((doc) => (doc.id === id ? { ...doc, status: newStatus } : doc))
+  const handleAddDoctor = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/doctors", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newDoctor),
+      });
+      if (!response.ok) throw new Error("Error adding doctor");
+      const data = await response.json();
+      setDoctors((prev) => [...prev, data]);
+      setNewDoctor({
+        name: "",
+        specialty: "",
+        email: "",
+        password: "",
+        phone: "",
+        clinic: "",
+      });
+      setShowAddDoctorModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleViewDoctor = (id) => {
+    const doctor = doctors.find((doc) => doc._id === id);
+    setSelectedDoctor(doctor);
+  };
+
+  const handleCloseViewModal = () => {
+    setSelectedDoctor(null);
+  };
+
+  const handleDeleteDoctor = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this doctor?"
     );
-  };
+    if (!confirmDelete) return;
 
-  const handleViewDoctor = (doctor) => {
-    setDoctorToView(doctor);
-    setShowViewDoctorModal(true);
-  };
+    try {
+      const response = await fetch(`http://localhost:5000/api/doctors/${id}`, {
+        method: "DELETE",
+      });
 
-  const handleAddDoctor = () => {
-    setDoctors((prev) => [
-      ...prev,
-      { ...newDoctor, id: prev.length + 1, status: "Pending" },
-    ]);
-    setNewDoctor({
-      name: "",
-      specialty: "",
-      email: "",
-      phone: "",
-      clinic: "",
-    });
-    setShowAddDoctorModal(false);
+      if (!response.ok) throw new Error("Failed to delete doctor");
+
+      setDoctors((prev) => prev.filter((doc) => doc._id !== id));
+    } catch (error) {
+      console.error("Error deleting doctor:", error);
+      alert("Failed to delete doctor. Please try again.");
+    }
   };
 
   return (
@@ -94,7 +99,7 @@ const ManageDoctors = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Manage Doctors</h1>
             <p className="text-sm text-gray-500">
-              Review, approve, or reject doctor registrations
+              View and manage registered doctors
             </p>
           </div>
           <div className="flex gap-3">
@@ -131,14 +136,13 @@ const ManageDoctors = () => {
                 <th className="px-6 py-4">Specialty</th>
                 <th className="px-6 py-4">Clinic</th>
                 <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredDoctors.map((doc) => (
                 <tr
-                  key={doc.id}
+                  key={doc._id}
                   className="border-t hover:bg-gray-50 transition"
                 >
                   <td className="px-6 py-4 font-medium">{doc.name}</td>
@@ -148,47 +152,25 @@ const ManageDoctors = () => {
                     <div>{doc.email}</div>
                     <div className="text-sm text-gray-500">{doc.phone}</div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        doc.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : doc.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {doc.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 flex items-center justify-center gap-4">
-                    <button
-                      className="text-green-600 hover:text-green-700"
-                      onClick={() => handleStatusChange(doc.id, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => handleStatusChange(doc.id, "Rejected")}
-                    >
-                      Reject
-                    </button>
+                  <td className="px-6 py-4 text-center space-x-3">
                     <button
                       className="text-blue-600 hover:text-blue-700"
-                      onClick={() => handleViewDoctor(doc)}
+                      onClick={() => handleViewDoctor(doc._id)}
                     >
                       View
                     </button>
-                    <button className="text-gray-600 hover:text-gray-800">
-                      <Pencil size={20} />
+                    <button
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteDoctor(doc._id)}
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
               ))}
               {filteredDoctors.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="text-center text-gray-400 py-6">
+                  <td colSpan="5" className="text-center text-gray-400 py-6">
                     No doctors found.
                   </td>
                 </tr>
@@ -198,69 +180,38 @@ const ManageDoctors = () => {
         </div>
       </main>
 
-      {/* Modal for Add Doctor */}
-      {showAddDoctorModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-xl w-1/3">
-            <h3 className="text-xl font-bold mb-4">Add New Doctor</h3>
+      {/* View Doctor Modal */}
+      {selectedDoctor && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50">
+          <div className="bg-white p-8 rounded-xl w-1/3 shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Doctor Details</h3>
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Name"
-                value={newDoctor.name}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, name: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="Specialty"
-                value={newDoctor.specialty}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, specialty: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={newDoctor.email}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, email: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                value={newDoctor.phone}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, phone: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="Clinic"
-                value={newDoctor.clinic}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, clinic: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
+              <p>
+                <strong>Name:</strong> {selectedDoctor.name}
+              </p>
+              <p>
+                <strong>Specialty:</strong> {selectedDoctor.specialty}
+              </p>
+              <p>
+                <strong>Clinic:</strong> {selectedDoctor.clinic}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedDoctor.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {selectedDoctor.phone}
+              </p>
+              {selectedDoctor.bio && (
+                <p>
+                  <strong>Bio:</strong> {selectedDoctor.bio}
+                </p>
+              )}
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
-                  onClick={() => setShowAddDoctorModal(false)}
+                  onClick={handleCloseViewModal}
                 >
-                  Cancel
-                </button>
-                <button
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-                  onClick={handleAddDoctor}
-                >
-                  Add Doctor
+                  Close
                 </button>
               </div>
             </div>
@@ -268,33 +219,78 @@ const ManageDoctors = () => {
         </div>
       )}
 
-      {/* Modal for View Doctor */}
-      {showViewDoctorModal && doctorToView && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-xl w-1/3">
-            <h3 className="text-xl font-bold mb-4">Doctor Profile</h3>
+      {/* Add Doctor Modal */}
+      {showAddDoctorModal && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50">
+          <div className="bg-white p-8 rounded-xl w-1/3 shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Add New Doctor</h3>
             <div className="space-y-4">
-              <p>
-                <strong>Name:</strong> {doctorToView.name}
-              </p>
-              <p>
-                <strong>Specialty:</strong> {doctorToView.specialty}
-              </p>
-              <p>
-                <strong>Email:</strong> {doctorToView.email}
-              </p>
-              <p>
-                <strong>Phone:</strong> {doctorToView.phone}
-              </p>
-              <p>
-                <strong>Clinic:</strong> {doctorToView.clinic}
-              </p>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Name"
+                value={newDoctor.name}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, name: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Specialty"
+                value={newDoctor.specialty}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, specialty: e.target.value })
+                }
+              />
+              <input
+                type="email"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Email"
+                value={newDoctor.email}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, email: e.target.value })
+                }
+              />
+              <input
+                type="password"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Password"
+                value={newDoctor.password}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, password: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Phone"
+                value={newDoctor.phone}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, phone: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Clinic"
+                value={newDoctor.clinic}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, clinic: e.target.value })
+                }
+              />
               <div className="flex justify-end gap-3 mt-4">
                 <button
-                  className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
-                  onClick={() => setShowViewDoctorModal(false)}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700"
+                  onClick={() => setShowAddDoctorModal(false)}
                 >
-                  Close
+                  Cancel
+                </button>
+                <button
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+                  onClick={handleAddDoctor}
+                >
+                  Add Doctor
                 </button>
               </div>
             </div>

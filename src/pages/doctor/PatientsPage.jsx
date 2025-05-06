@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DoctorNav from "../../components/layout/DoctorNav";
 import { Dialog } from "@headlessui/react";
 import { MessageSquareText, FileText } from "lucide-react";
+import { FaUsers } from "react-icons/fa";
 
 const patients = [
   {
@@ -67,18 +68,22 @@ const PatientsPage = () => {
     <div className="flex min-h-screen bg-gray-50 relative overflow-hidden">
       <DoctorNav />
 
-      <main className="flex-1 p-6 pt-0 overflow-y-auto space-y-6">
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Header */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Patients</h1>
-            <p className="text-gray-600 mt-1">
-              Manage and explore your patients
-            </p>
+          {/* Left: Icon + Title */}
+          <div className="flex items-center gap-4">
+            <FaUsers className="text-blue-600 text-3xl" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Patients</h1>
+              <p className="text-gray-600 mt-1">
+                Manage and explore your patients
+              </p>
+            </div>
           </div>
 
-          {/* Search & Filter */}
-          <div className="flex flex-col md:flex-row items-center gap-4 mr-10">
+          {/* Right: Search & Filter */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
             <input
               type="text"
               placeholder="Search by name..."
@@ -89,7 +94,7 @@ const PatientsPage = () => {
             <select
               value={genderFilter}
               onChange={(e) => setGenderFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-auto"
             >
               <option value="All">All Genders</option>
               <option value="Male">Male</option>

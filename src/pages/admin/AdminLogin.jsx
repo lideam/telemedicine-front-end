@@ -1,21 +1,54 @@
 // src/pages/admin/AdminLogin.jsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
+  const from = location.state?.from?.pathname || "/admin-dashboard";
+
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
 
-    // Dummy validation - you can replace this with real backend login later
-    if (email === "admin@tele.com" && password === "admin123") {
-      sessionStorage.setItem("admin-token", "fake-admin-token");
-      navigate("/admin-dashboard");
-    } else {
-      alert("Invalid credentials");
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    const url = "http://localhost:5000/api/auth/login";
+
+    const payload = {
+      email,
+      password,
+      role: "admin",
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      // Save user info & token
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+
+      // Navigate to the intended page
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -26,6 +59,9 @@ const AdminLogin = () => {
           Admin Login
         </h2>
         <form onSubmit={handleLogin} className="space-y-4">
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
           <div>
             <label className="block text-gray-600 mb-1">Email</label>
             <input

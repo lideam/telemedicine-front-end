@@ -1,40 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import AdminNav from "../../components/layout/AdminNav";
-import {
-  Search,
-  CheckCircle,
-  XCircle,
-  Eye,
-  PlusCircle,
-  FileDown,
-} from "lucide-react";
-
-const dummyPatients = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "0912345678",
-    status: "Approved",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "janesmith@example.com",
-    phone: "0923456789",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    name: "Samuel Tesfaye",
-    email: "samuel@example.com",
-    phone: "0934567890",
-    status: "Rejected",
-  },
-];
+import { Search, PlusCircle, FileDown } from "lucide-react";
 
 const ManagePatients = () => {
-  const [patients, setPatients] = useState(dummyPatients);
+  const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [showViewPatientModal, setShowViewPatientModal] = useState(false);
@@ -45,18 +15,38 @@ const ManagePatients = () => {
     phone: "",
   });
 
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchPatients = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/patients");
+      setPatients(response.data);
+    } catch (error) {
+      console.error("Failed to fetch patients:", error);
+    }
+  };
 
-  const handleStatusChange = (id, newStatus) => {
-    setPatients((prev) =>
-      prev.map((patient) =>
-        patient.id === id ? { ...patient, status: newStatus } : patient
-      )
-    );
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const handleAddPatient = async () => {
+    if (!newPatient.name || !newPatient.email || !newPatient.phone) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/patients",
+        newPatient
+      );
+      setPatients((prev) => [...prev, response.data]);
+      setNewPatient({ name: "", email: "", phone: "" });
+      setShowAddPatientModal(false);
+      setSearchTerm("");
+    } catch (error) {
+      alert("Failed to add patient: " + error.message);
+      console.error("Failed to add patient:", error);
+    }
   };
 
   const handleViewPatient = (patient) => {
@@ -64,17 +54,32 @@ const ManagePatients = () => {
     setShowViewPatientModal(true);
   };
 
-  const handleAddPatient = () => {
-    setPatients((prev) => [
-      ...prev,
-      { ...newPatient, id: prev.length + 1, status: "Pending" },
-    ]);
-    setNewPatient({
-      name: "",
-      email: "",
-      phone: "",
-    });
+  const handleDeletePatient = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this patient?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/patients/${id}`);
+      setPatients((prev) => prev.filter((p) => p._id !== id));
+    } catch (error) {
+      console.error("Failed to delete patient:", error);
+      alert("Failed to delete patient.");
+    }
+  };
+
+  const filteredPatients = patients.filter(
+    (patient) =>
+      patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const closeModal = () => {
     setShowAddPatientModal(false);
+    setShowViewPatientModal(false);
+    setNewPatient({ name: "", email: "", phone: "" });
+    setSearchTerm("");
   };
 
   return (
@@ -87,7 +92,7 @@ const ManagePatients = () => {
               Manage Patients
             </h1>
             <p className="text-sm text-gray-500">
-              Review, approve, or reject patient registrations
+              Review registered patient details
             </p>
           </div>
           <div className="flex gap-3">
@@ -123,57 +128,37 @@ const ManagePatients = () => {
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Phone</th>
-                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPatients.map((patient) => (
                 <tr
-                  key={patient.id}
+                  key={patient._id}
                   className="border-t hover:bg-gray-50 transition"
                 >
                   <td className="px-6 py-4 font-medium">{patient.name}</td>
                   <td className="px-6 py-4">{patient.email}</td>
                   <td className="px-6 py-4">{patient.phone}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        patient.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : patient.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {patient.status}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 flex items-center justify-center gap-4">
                     <button
-                      className="text-green-600 hover:text-green-700"
-                      onClick={() => handleStatusChange(patient.id, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => handleStatusChange(patient.id, "Rejected")}
-                    >
-                      Reject
-                    </button>
-                    <button
-                      className="text-blue-600 hover:text-blue-700"
+                      className="text-blue-600 hover:underline"
                       onClick={() => handleViewPatient(patient)}
                     >
                       View
+                    </button>
+                    <button
+                      className="text-red-600 hover:underline"
+                      onClick={() => handleDeletePatient(patient._id)}
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
               ))}
               {filteredPatients.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center text-gray-400 py-6">
+                  <td colSpan="4" className="text-center text-gray-400 py-6">
                     No patients found.
                   </td>
                 </tr>
@@ -183,10 +168,16 @@ const ManagePatients = () => {
         </div>
       </main>
 
-      {/* Modal for Add Patient */}
+      {/* Add Patient Modal */}
       {showAddPatientModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-xl w-1/3">
+        <div
+          onClick={closeModal}
+          className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+        >
+          <div
+            className="bg-white p-8 rounded-xl w-1/3 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold mb-4">Add New Patient</h3>
             <div className="space-y-4">
               <input
@@ -219,7 +210,7 @@ const ManagePatients = () => {
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
-                  onClick={() => setShowAddPatientModal(false)}
+                  onClick={closeModal}
                 >
                   Cancel
                 </button>
@@ -235,10 +226,16 @@ const ManagePatients = () => {
         </div>
       )}
 
-      {/* Modal for View Patient */}
+      {/* View Patient Modal */}
       {showViewPatientModal && patientToView && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-xl w-1/3">
+        <div
+          onClick={closeModal}
+          className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+        >
+          <div
+            className="bg-white p-8 rounded-xl w-1/3 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold mb-4">Patient Profile</h3>
             <div className="space-y-4">
               <p>
@@ -253,7 +250,7 @@ const ManagePatients = () => {
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
-                  onClick={() => setShowViewPatientModal(false)}
+                  onClick={closeModal}
                 >
                   Close
                 </button>

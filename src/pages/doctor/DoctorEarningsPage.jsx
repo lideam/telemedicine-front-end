@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaMoneyCheckAlt, FaDownload } from "react-icons/fa";
+import { FaMoneyCheckAlt, FaDownload, FaWallet } from "react-icons/fa";
 import DoctorNav from "../../components/layout/DoctorNav";
 
 const DoctorEarningsPage = () => {
@@ -40,11 +40,12 @@ const DoctorEarningsPage = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 relative">
       <DoctorNav />
-      <main className="flex-1 p-6 pt-0 space-y-6">
+      <main className="flex-1 p-6 pt-0 ml-64 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center bg-white p-6 -ml-6 -mr-6  shadow-md ">
+        <div className="bg-white text-black p-3 pl-6 -ml-6 -mr-6 flex shadow-md items-center mb-6 gap-5">
+        <FaWallet className="text-blue-600 text-3xl" />   
           <div>
-            <h1 className="text-2xl font-bold text-green-700">
+            <h1 className="text-2xl font-bold text-gray-800">
               Earnings Overview
             </h1>
             <p className="text-sm text-gray-500 mt-1">

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DoctorNav from "../../components/layout/DoctorNav";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   CalendarDays,
@@ -60,6 +60,18 @@ const statsData = [
 
 const DoctorDashboard = () => {
   const [date, setDate] = useState(new Date());
+  const [doctorName, setDoctorName] = useState("Doctor");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem("userInfo");
+    if (!storedUserInfo) {
+      navigate("/doctor-login");
+    } else {
+      const user = JSON.parse(storedUserInfo);
+      setDoctorName(user.name);
+    }
+  }, [navigate]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -67,7 +79,7 @@ const DoctorDashboard = () => {
       <DoctorNav />
 
       {/* Main Content */}
-      <main className="flex-1 p-6 pt-0 overflow-y-auto space-y-6">
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Welcome Section */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
           <img
@@ -77,7 +89,7 @@ const DoctorDashboard = () => {
           />
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              Welcome, Dr. John
+              Welcome, Dr. {doctorName}
             </h1>
             <p className="text-gray-600 mt-1">
               Here is your dashboard summary for today.

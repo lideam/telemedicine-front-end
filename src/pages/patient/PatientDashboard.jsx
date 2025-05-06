@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaAppleAlt, FaRunning, FaTint, FaHeartbeat, FaFileMedical, FaWeight, FaStethoscope } from "react-icons/fa";
+import {
+  FaAppleAlt,
+  FaRunning,
+  FaTint,
+  FaHeartbeat,
+  FaFileMedical,
+  FaWeight,
+  FaStethoscope,
+} from "react-icons/fa";
 import Calendar from "react-calendar";
 import { Bar } from "react-chartjs-2";
 import {
@@ -19,6 +27,16 @@ import PatientNav from "../../components/layout/PatientNav";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const PatientDashboard = () => {
+  const [userName, setUserName] = useState("John Doe");
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userInfo");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setUserName(parsed.name || "John Doe");
+    }
+  }, []);
+
   const [appointments] = useState([
     {
       id: 1,
@@ -88,7 +106,7 @@ const PatientDashboard = () => {
             className="w-16 h-16 rounded-full object-cover border-2 border-blue-600"
           />
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome, John Doe</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Welcome, {userName}</h1>
             <p className="text-gray-600 mt-1">Your health dashboard at a glance</p>
           </div>
         </section>
@@ -124,9 +142,14 @@ const PatientDashboard = () => {
                   <div>
                     <h4 className="font-bold text-gray-800">{appointment.doctorName}</h4>
                     <p className="text-sm text-gray-600">{appointment.specialty}</p>
-                    <p className="text-sm text-gray-600">{appointment.date} at {appointment.time}</p>
+                    <p className="text-sm text-gray-600">
+                      {appointment.date} at {appointment.time}
+                    </p>
                   </div>
-                  <Link to="/patient-appointments" className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
+                  <Link
+                    to="/patient-appointments"
+                    className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"
+                  >
                     View
                   </Link>
                 </div>
@@ -160,5 +183,3 @@ const PatientDashboard = () => {
 };
 
 export default PatientDashboard;
-
-

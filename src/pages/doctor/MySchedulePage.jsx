@@ -8,6 +8,7 @@ import {
   Download,
   Search,
 } from "lucide-react";
+import { FaCalendarCheck } from "react-icons/fa";
 
 const appointments = [
   {
@@ -50,17 +51,22 @@ const MySchedulePage = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
-      <main className="flex-1 p-6 pt-0 space-y-6 overflow-y-auto">
+      <main className="flex-1 p-6 pt-0 space-y-6 ml-64 overflow-y-auto">
         {/* Header */}
-        <section className="bg-white p-4 -ml-6 -mr-6  shadow flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">My Schedule</h1>
-            <p className="text-gray-600">
-              Manage your availability and appointments
-            </p>
+        <section className="bg-white p-4 -ml-6 -mr-6 shadow flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Left: Icon + Title */}
+          <div className="flex items-center gap-4">
+            <FaCalendarCheck className="text-blue-600 text-3xl" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">My Schedule</h1>
+              <p className="text-gray-600">
+                Manage your availability and appointments
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right: Controls */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600">Available:</label>
               <button
@@ -87,10 +93,12 @@ const MySchedulePage = () => {
                 )}
               </button>
             </div>
-            <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
-              <Download size={16} />
-              Export
-            </button>
+            <div>
+              <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
+                <Download size={16} />
+                Export
+              </button>
+            </div>
           </div>
         </section>
 

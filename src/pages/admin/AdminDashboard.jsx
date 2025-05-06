@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import AdminNav from "../../components/layout/AdminNav";
 import {
   BarChart3,
@@ -7,6 +8,26 @@ import {
   DollarSign,
   ChevronRight,
 } from "lucide-react";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const cards = [
   {
@@ -80,11 +101,62 @@ const appointments = [
   },
 ];
 
+// Data for Bar Charts
+const revenueData = {
+  labels: ["January", "February", "March", "April"],
+  datasets: [
+    {
+      label: "Revenue (ETB)",
+      data: [50000, 60000, 75000, 95000],
+      backgroundColor: "rgba(54, 162, 235, 0.6)",
+      borderColor: "rgba(54, 162, 235, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
+
+const appointmentData = {
+  labels: ["January", "February", "March", "April"],
+  datasets: [
+    {
+      label: "Appointments",
+      data: [80, 90, 120, 150],
+      backgroundColor: "rgba(255, 206, 86, 0.6)",
+      borderColor: "rgba(255, 206, 86, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
+
+const patientGrowthData = {
+  labels: ["January", "February", "March", "April"],
+  datasets: [
+    {
+      label: "New Patients",
+      data: [200, 250, 300, 400],
+      backgroundColor: "rgba(75, 192, 192, 0.6)",
+      borderColor: "rgba(75, 192, 192, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
+
+const chartOptions = {
+  responsive: true,
+  scales: {
+    y: {
+      beginAtZero: true,
+    },
+  },
+};
+
 const AdminDashboard = () => {
+  const navigate = useNavigate(); // 👉 add useNavigate()
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminNav />
-      <main className="flex-1  p-8 space-y-10">
+      <main className="flex-1 p-8 space-y-10">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -126,7 +198,10 @@ const AdminDashboard = () => {
               <h2 className="text-lg font-semibold text-gray-700">
                 Newly Registered Doctors
               </h2>
-              <button className="text-sm text-blue-600 hover:underline flex items-center">
+              <button
+                onClick={() => navigate("/admin/manage-doctors")}
+                className="text-sm text-blue-600 hover:underline flex items-center"
+              >
                 View All <ChevronRight size={16} />
               </button>
             </div>
@@ -156,7 +231,10 @@ const AdminDashboard = () => {
               <h2 className="text-lg font-semibold text-gray-700">
                 Recent Appointments
               </h2>
-              <button className="text-sm text-blue-600 hover:underline flex items-center">
+              <button
+                onClick={() => navigate("/admin/manage-appointments")}
+                className="text-sm text-blue-600 hover:underline flex items-center"
+              >
                 View All <ChevronRight size={16} />
               </button>
             </div>
@@ -202,20 +280,27 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Chart Placeholder */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-              <BarChart3 size={20} /> Platform Activity (Chart)
-            </h2>
-            <select className="border border-gray-300 rounded-lg px-3 py-1 text-sm">
-              <option>This Week</option>
-              <option>This Month</option>
-              <option>This Year</option>
-            </select>
+        {/* Chart Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Monthly Revenue</h2>
+            <div className="h-72">
+              <Bar data={revenueData} options={chartOptions} />
+            </div>
           </div>
-          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-            (Charts will be displayed here)
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Appointments Growth</h2>
+            <div className="h-72">
+              <Bar data={appointmentData} options={chartOptions} />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Patient Growth</h2>
+            <div className="h-72">
+              <Bar data={patientGrowthData} options={chartOptions} />
+            </div>
           </div>
         </div>
       </main>

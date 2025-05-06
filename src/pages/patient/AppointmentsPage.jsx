@@ -1,48 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
 import { FaCalendarAlt } from "react-icons/fa";
+import axios from "axios";
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
-  const [doctors] = useState([
-    {
-      id: 1,
-      name: "Dr. John Smith",
-      specialty: "Cardiologist",
-      experience: "10 years",
-      rating: 4.8,
-      clinic: "Addis Heart Center",
-      bio: "Experienced in treating cardiovascular diseases and performing diagnostic tests.",
-      image: "https://randomuser.me/api/portraits/men/32.jpg",
-      amount: 300,
-      availableSlots: [
-        { date: "2025-04-20", time: "10:00 AM" },
-        { date: "2025-04-21", time: "2:00 PM" },
-      ],
-    },
-    {
-      id: 2,
-      name: "Dr. Emily Davis",
-      specialty: "Dermatologist",
-      experience: "8 years",
-      rating: 4.6,
-      clinic: "Skin Wellness Clinic",
-      bio: "Specialist in skin treatments and cosmetic dermatology.",
-      image: "https://randomuser.me/api/portraits/women/44.jpg",
-      amount: 250,
-      availableSlots: [
-        { date: "2025-04-22", time: "11:00 AM" },
-        { date: "2025-04-23", time: "4:00 PM" },
-      ],
-    },
-  ]);
-
+  const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingAppointment, setPendingAppointment] = useState(null);
+
+  useEffect(() => {
+    // Fetch available doctors from backend API
+    axios
+      .get("/api/doctors")
+      .then((response) => {
+        setDoctors(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch((error) => {
+        console.error("Error fetching doctors:", error);
+      });
+
+    // Fetch existing appointments from backend API
+    axios
+      .get("/api/appointments")
+      .then((response) => {
+        // Ensure that the response data is an array
+        setAppointments(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch((error) => {
+        console.error("Error fetching appointments:", error);
+      });
+  }, []);
 
   const handleRequestAppointment = () => {
     if (!selectedDoctor || !selectedSlot) {
@@ -51,14 +43,14 @@ const AppointmentsPage = () => {
     }
 
     const newAppointment = {
-      id: appointments.length + 1,
+      doctorId: selectedDoctor._id,
       doctorName: selectedDoctor.name,
       specialty: selectedDoctor.specialty,
       date: selectedSlot.date,
       time: selectedSlot.time,
       amount: selectedDoctor.amount,
-      status: "Pending", // Can later be updated to "Confirmed"
-      paymentStatus: "Paid",
+      status: "Pending",
+      paymentStatus: "Pending",
     };
 
     setPendingAppointment(newAppointment);
@@ -66,16 +58,25 @@ const AppointmentsPage = () => {
   };
 
   const handlePayment = () => {
-    setAppointments([...appointments, pendingAppointment]);
-    setPendingAppointment(null);
-    setShowPaymentModal(false);
-    setSelectedDoctor(null);
-    setSelectedSlot(null);
-    alert("Payment successful! Appointment confirmed.");
+    // Simulate payment process (Chapa integration)
+    axios
+      .post("/api/appointments", pendingAppointment)
+      .then((response) => {
+        setAppointments([...appointments, response.data]);
+        setPendingAppointment(null);
+        setShowPaymentModal(false);
+        setSelectedDoctor(null);
+        setSelectedSlot(null);
+        alert("Payment successful! Appointment confirmed.");
+      })
+      .catch((error) => {
+        console.error("Error processing payment:", error);
+        alert("Error processing payment.");
+      });
   };
 
   const handleReschedule = (appointmentId) => {
-    const appointment = appointments.find((appt) => appt.id === appointmentId);
+    const appointment = appointments.find((appt) => appt._id === appointmentId);
 
     if (
       appointment.paymentStatus === "Paid" &&
@@ -100,7 +101,6 @@ const AppointmentsPage = () => {
       <PatientNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Available Doctors */}
-        {/* <div className="bg-white p-6 rounded-lg shadow-md"> */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
           <FaCalendarAlt className="text-blue-600 text-4xl" />
           <div>
@@ -115,13 +115,13 @@ const AppointmentsPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (
             <div
-              key={doctor.id}
+              key={doctor._id}
               onClick={() => {
                 setSelectedDoctor(doctor);
                 setSelectedSlot(null);
               }}
               className={`p-4 rounded-lg shadow-md cursor-pointer border transition-transform duration-200 ${
-                selectedDoctor?.id === doctor.id
+                selectedDoctor?._id === doctor._id
                   ? "bg-blue-100 border-blue-500 scale-105"
                   : "bg-white"
               }`}
@@ -149,7 +149,6 @@ const AppointmentsPage = () => {
             </div>
           ))}
         </div>
-        {/* </div> */}
 
         {/* Select Slot */}
         {selectedDoctor && (
@@ -158,7 +157,7 @@ const AppointmentsPage = () => {
               Choose Time with {selectedDoctor.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedDoctor.availableSlots.map((slot, index) => (
+              {selectedDoctor.availableSlots?.map((slot, index) => (
                 <div
                   key={index}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
@@ -197,7 +196,7 @@ const AppointmentsPage = () => {
           ) : (
             appointments.map((appointment) => (
               <div
-                key={appointment.id}
+                key={appointment._id}
                 className="p-4 border rounded-lg mb-2 bg-gray-50"
               >
                 <p>
@@ -235,7 +234,7 @@ const AppointmentsPage = () => {
 
                 {appointment.status === "Declined" && (
                   <button
-                    onClick={() => handleReschedule(appointment.id)}
+                    onClick={() => handleReschedule(appointment._id)}
                     className="mt-2 text-blue-600 underline block"
                   >
                     Reschedule Appointment (Payment Retained)
