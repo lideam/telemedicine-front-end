@@ -49,6 +49,7 @@ const DoctorAuth = () => {
       localStorage.setItem("userInfo", JSON.stringify(data));
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
+      localStorage.setItem("userId", data._id); // ✅ correct usage based on response
 
       // Navigate to doctor dashboard
       navigate("/doctor-dashboard");

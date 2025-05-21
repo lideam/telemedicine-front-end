@@ -1,85 +1,61 @@
 import { useState, useEffect } from "react";
 import DoctorNav from "../../components/layout/DoctorNav";
-import { Dialog } from "@headlessui/react";
 import { FaCalendarAlt } from "react-icons/fa";
 
-// Placeholder data for appointments
-const appointmentsData = [
-  {
-    id: 1,
-    patient: "Jane Doe",
-    date: "Apr 16, 2025",
-    time: "10:00 AM",
-    status: "Confirmed",
-    type: "Consultation",
-    contact: "jane.doe@example.com",
-    reason: "Follow-up checkup",
-  },
-  {
-    id: 2,
-    patient: "Michael Smith",
-    date: "Apr 16, 2025",
-    time: "11:30 AM",
-    status: "Pending",
-    type: "Consultation",
-    contact: "michael.smith@example.com",
-    reason: "Initial consultation",
-  },
-  {
-    id: 3,
-    patient: "Sarah Johnson",
-    date: "Apr 16, 2025",
-    time: "1:00 PM",
-    status: "Cancelled",
-    type: "Follow-up",
-    contact: "sarah.johnson@example.com",
-    reason: "Test results",
-  },
-];
-
 const DoctorAppointmentPage = () => {
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
   const [availability, setAvailability] = useState([]);
   const [newSlot, setNewSlot] = useState({ date: "", time: "" });
   const [loading, setLoading] = useState(false);
-  const [appointments, setAppointments] = useState(appointmentsData);
+  const [appointments, setAppointments] = useState([]);
   const [doctorId, setDoctorId] = useState(null);
+  const [editingSlotId, setEditingSlotId] = useState(null);
+  const [updatedSlot, setUpdatedSlot] = useState({ time: "" });
 
   useEffect(() => {
-    const storedUserInfo = localStorage.getItem("userInfo");
-    if (storedUserInfo) {
+    const fetchDoctorData = async () => {
+      const storedUserInfo = localStorage.getItem("userInfo");
+      if (!storedUserInfo) return;
       const user = JSON.parse(storedUserInfo);
 
-      // First get the user ID
-      const userId = user._id;
+      try {
+        // Fetch doctor info
+        const doctorRes = await fetch(
+          `http://localhost:5000/api/doctors/user/${user._id}`
+        );
+        const doctorData = await doctorRes.json();
 
-      // Then fetch the corresponding doctor profile using userId
-      const fetchDoctorId = async () => {
-        try {
-          const res = await fetch(
-            `http://localhost:5000/api/doctors/user/${userId}`
+        if (doctorRes.ok && doctorData._id) {
+          setDoctorId(doctorData._id);
+          setAvailability(doctorData.availability || []);
+
+          // Fetch appointments for this doctor
+          const apptRes = await fetch(
+            `http://localhost:5000/api/appointments/doctor/${doctorData._id}`
           );
-          const data = await res.json();
+          const appts = await apptRes.json();
 
-          if (res.ok && data.doctor) {
-            setDoctorId(data.doctor._id); // The actual doctor _id
+          if (apptRes.ok) {
+            setAppointments(appts);
           } else {
-            console.error("Doctor not found for this user.");
+            console.error("Failed to fetch appointments.");
           }
-        } catch (error) {
-          console.error("Error fetching doctor by user ID:", error);
+        } else {
+          console.error("Doctor not found for this user.");
         }
-      };
+      } catch (error) {
+        console.error("Error fetching doctor or appointments:", error);
+      }
+    };
 
-      fetchDoctorId();
-    }
+    fetchDoctorData();
   }, []);
-
-  const closeModal = () => setOpenModal(false);
 
   const handleAddAvailability = async (e) => {
     e.preventDefault();
+    if (!newSlot.date || !newSlot.time) {
+      alert("Please enter both date and time.");
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch(
@@ -95,93 +71,123 @@ const DoctorAppointmentPage = () => {
       );
       const data = await response.json();
       if (response.ok) {
-        setAvailability([
-          ...availability,
-          { date: newSlot.date, time: newSlot.time },
+        setAvailability((prev) => [
+          ...prev,
+          { _id: data._id, date: newSlot.date, timeSlots: [newSlot.time] },
         ]);
         setNewSlot({ date: "", time: "" });
       } else {
         alert("Error: " + data.message);
       }
-    } catch (error) {
+    } catch {
       alert("Error adding availability");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!doctorId) return;
-    const fetchAvailability = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/doctors/${doctorId}/availability`
-        );
+  const handleUpdateAvailability = async (availabilityId) => {
+    if (!updatedSlot.time) {
+      alert("Please enter the time.");
+      return;
+    }
 
-        const data = await response.json();
-        if (response.ok) {
-          setAvailability(data.availability);
-        } else {
-          console.error(data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching availability:", error);
-      }
-    };
-    fetchAvailability();
-  }, [doctorId]);
-
-  const handleConfirmAppointment = async (appointmentId) => {
     try {
       const response = await fetch(
-        `/api/appointments/${appointmentId}/confirm`,
+        `http://localhost:5000/api/doctors/${doctorId}/availability/${availabilityId}`,
         {
           method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            timeSlots: [updatedSlot.time],
+          }),
         }
       );
       const data = await response.json();
+
       if (response.ok) {
-        setAppointments(
-          appointments.map((appt) =>
-            appt.id === appointmentId ? { ...appt, status: "Confirmed" } : appt
+        setAvailability((prev) =>
+          prev.map((slot) =>
+            slot._id === availabilityId
+              ? {
+                  ...slot,
+                  timeSlots: [updatedSlot.time],
+                }
+              : slot
           )
         );
+        setEditingSlotId(null);
       } else {
-        alert("Error confirming appointment: " + data.message);
+        console.error("Error:", data.message);
+        alert("Update failed: " + data.message);
       }
     } catch (error) {
-      alert("Error confirming appointment");
+      console.error("Error updating availability:", error);
+      alert("Error updating availability.");
     }
   };
 
-  const handleCancelAppointment = async (appointmentId) => {
+  const handleEditAvailability = (slot) => {
+    setEditingSlotId(slot._id);
+    setUpdatedSlot({ time: slot.timeSlots[0] });
+  };
+
+  const handleRemoveAvailability = async (availabilityId) => {
     try {
       const response = await fetch(
-        `/api/appointments/${appointmentId}/cancel`,
-        {
-          method: "PATCH",
-        }
+        `http://localhost:5000/api/doctors/${doctorId}/availability/${availabilityId}`,
+        { method: "DELETE" }
       );
       const data = await response.json();
       if (response.ok) {
-        setAppointments(
-          appointments.map((appt) =>
-            appt.id === appointmentId ? { ...appt, status: "Cancelled" } : appt
-          )
+        setAvailability((prev) =>
+          prev.filter((slot) => slot._id !== availabilityId)
         );
       } else {
-        alert("Error canceling appointment: " + data.message);
+        alert("Delete failed: " + data.message);
       }
-    } catch (error) {
-      alert("Error canceling appointment");
+    } catch {
+      alert("Error deleting availability.");
     }
+  };
+
+  const handleStatusUpdate = async (appointmentId, newStatus) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/appointments/${appointmentId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+      const updated = await response.json();
+
+      if (response.ok) {
+        setAppointments((prev) =>
+          prev.map((appt) => (appt._id === updated._id ? updated : appt))
+        );
+      } else {
+        alert(updated.message || "Status update failed");
+      }
+    } catch (err) {
+      console.error("Status update failed", err);
+      alert("Error updating appointment status.");
+    }
+  };
+
+  const handleConfirmAppointment = (appointmentId) => {
+    handleStatusUpdate(appointmentId, "Confirmed");
+  };
+
+  const handleCancelAppointment = (appointmentId) => {
+    handleStatusUpdate(appointmentId, "Declined");
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-        {/* Header with ID */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5 justify-between">
           <div className="flex items-center gap-5">
             <FaCalendarAlt className="text-blue-600 text-3xl" />
@@ -189,188 +195,146 @@ const DoctorAppointmentPage = () => {
               <h1 className="text-2xl font-bold text-gray-800">
                 Doctor's Appointments
               </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your scheduled appointments
+              <p className="text-gray-500">
+                Manage your schedule and appointments
               </p>
             </div>
           </div>
-          {doctorId && (
-            <div className="text-gray-500 text-sm">
-              Doctor ID:{" "}
-              <span className="font-mono text-gray-700">{doctorId}</span>
-            </div>
+        </section>
+
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Set Availability</h2>
+          <form
+            onSubmit={handleAddAvailability}
+            className="flex gap-3 items-center mb-4"
+          >
+            <input
+              type="date"
+              value={newSlot.date}
+              onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })}
+              required
+              className="border px-2 py-1 rounded"
+            />
+            <input
+              type="time"
+              value={newSlot.time}
+              onChange={(e) => setNewSlot({ ...newSlot, time: e.target.value })}
+              required
+              className="border px-2 py-1 rounded"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+            >
+              {loading ? "Adding..." : "Add"}
+            </button>
+          </form>
+          {availability.length > 0 ? (
+            availability.map((slot) => (
+              <div
+                key={slot._id}
+                className="border p-3 mb-2 rounded bg-gray-50"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <strong>{new Date(slot.date).toLocaleDateString()}:</strong>{" "}
+                    {slot.timeSlots.join(", ")}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className="text-blue-600"
+                      onClick={() => handleEditAvailability(slot)}
+                    >
+                      Edit Availability
+                    </button>
+
+                    <button
+                      className="text-red-600"
+                      onClick={() => handleRemoveAvailability(slot._id)}
+                    >
+                      Remove Availability
+                    </button>
+                  </div>
+                </div>
+
+                {editingSlotId === slot._id && (
+                  <div className="mt-4">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleUpdateAvailability(slot._id);
+                      }}
+                      className="flex gap-3"
+                    >
+                      <input
+                        type="time"
+                        value={updatedSlot.time}
+                        onChange={(e) =>
+                          setUpdatedSlot({
+                            ...updatedSlot,
+                            time: e.target.value,
+                          })
+                        }
+                        required
+                        className="border px-2 py-1 rounded"
+                      />
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                      >
+                        Save Changes
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p>No availability set.</p>
           )}
         </section>
 
-        {/* Availability Form */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Set Your Availability
-          </h2>
-          <form onSubmit={handleAddAvailability} className="space-y-4">
-            <div>
-              <label className="block text-gray-700">Date</label>
-              <input
-                type="date"
-                value={newSlot.date}
-                onChange={(e) =>
-                  setNewSlot({ ...newSlot, date: e.target.value })
-                }
-                required
-                className="mt-2 p-2 w-full border rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">Time</label>
-              <input
-                type="time"
-                value={newSlot.time}
-                onChange={(e) =>
-                  setNewSlot({ ...newSlot, time: e.target.value })
-                }
-                required
-                className="mt-2 p-2 w-full border rounded-md"
-              />
-            </div>
-            <button
-              type="submit"
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md"
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add Availability"}
-            </button>
-          </form>
-        </div>
+        <section className="bg-white p-6 rounded shadow mt-6">
+          <h2 className="text-xl font-semibold mb-4">Appointments</h2>
+          {appointments.length > 0 ? (
+            appointments.map((appointment) => (
+              <div
+                key={appointment._id}
+                className="flex justify-between items-center mb-3 border p-3 rounded bg-gray-50"
+              >
+                <div>
+                  <strong>
+                    {appointment.patientId?.name || "Unknown Patient"}
+                  </strong>
 
-        {/* Availability List */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Your Available Slots
-          </h2>
-          <div className="space-y-2">
-            {availability.length > 0 ? (
-              availability.map((slot, index) => (
-                <div key={index} className="flex justify-between">
-                  <span className="text-gray-800">
-                    {`${slot.date} - ${slot.time}`}
-                  </span>
+                  <div>
+                    {new Date(appointment.date).toLocaleDateString()} |{" "}
+                    {appointment.time} -{" "}
+                    <span className="font-semibold">{appointment.status}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
                   <button
-                    className="text-red-600 hover:underline"
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(
-                          `/api/doctors/${doctorId}/availability/${slot.id}`,
-                          { method: "DELETE" }
-                        );
-                        if (response.ok) {
-                          setAvailability(
-                            availability.filter((_, idx) => idx !== index)
-                          );
-                        } else {
-                          alert("Error removing availability");
-                        }
-                      } catch (error) {
-                        alert("Error removing availability");
-                      }
-                    }}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                    onClick={() => handleConfirmAppointment(appointment._id)}
                   >
-                    Remove
+                    Confirm
+                  </button>
+                  <button
+                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                    onClick={() => handleCancelAppointment(appointment._id)}
+                  >
+                    Decline
                   </button>
                 </div>
-              ))
-            ) : (
-              <p>No available slots set yet.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Appointment Table */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Upcoming Appointments
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr className="text-gray-500 border-b">
-                  <th className="py-3 px-4">Patient</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Time</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appt) => (
-                  <tr key={appt.id} className="border-b">
-                    <td className="py-3 px-4">{appt.patient}</td>
-                    <td className="py-3 px-4">{appt.date}</td>
-                    <td className="py-3 px-4">{appt.time}</td>
-                    <td className="py-3 px-4">{appt.status}</td>
-                    <td className="py-3 px-4 space-x-2">
-                      {appt.status === "Pending" && (
-                        <>
-                          <button
-                            onClick={() => handleConfirmAppointment(appt.id)}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => handleCancelAppointment(appt.id)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </div>
+            ))
+          ) : (
+            <p>No upcoming appointments.</p>
+          )}
+        </section>
       </main>
-
-      {/* Appointment Modal */}
-      <Dialog open={openModal} onClose={closeModal}>
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-6 rounded-xl w-1/3 max-w-lg">
-            {selectedAppointment && (
-              <>
-                <h2 className="text-xl font-semibold mb-4">
-                  Appointment Details
-                </h2>
-                <div className="mb-2">
-                  <strong>Patient:</strong> {selectedAppointment.patient}
-                </div>
-                <div className="mb-2">
-                  <strong>Date:</strong> {selectedAppointment.date}
-                </div>
-                <div className="mb-2">
-                  <strong>Time:</strong> {selectedAppointment.time}
-                </div>
-                <div className="mb-2">
-                  <strong>Type:</strong> {selectedAppointment.type}
-                </div>
-                <div className="mb-2">
-                  <strong>Contact:</strong> {selectedAppointment.contact}
-                </div>
-                <div className="mb-2">
-                  <strong>Reason:</strong> {selectedAppointment.reason}
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md"
-                >
-                  Close
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </Dialog>
     </div>
   );
 };

@@ -60,10 +60,8 @@ const PatientAuth = () => {
         throw new Error(data.message || "Something went wrong");
       }
 
-      // Save user info & token to localStorage
+      // Save user info & token to localStorage (IMPORTANT)
       localStorage.setItem("userInfo", JSON.stringify(data));
-
-      // Explicitly store the user's role
       localStorage.setItem("role", "patient");
 
       // Navigate to patient dashboard

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
 import { FaCalendarAlt } from "react-icons/fa";
-import axios from "axios";
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
@@ -14,35 +13,45 @@ const AppointmentsPage = () => {
   const [pendingAppointment, setPendingAppointment] = useState(null);
 
   useEffect(() => {
-    // Fetch available doctors from backend API
-    axios
-      .get("/api/doctors")
-      .then((response) => {
-        setDoctors(Array.isArray(response.data) ? response.data : []);
-      })
-      .catch((error) => {
-        console.error("Error fetching doctors:", error);
-      });
+    const user = JSON.parse(localStorage.getItem("userInfo"));
 
-    // Fetch existing appointments from backend API
-    axios
-      .get("/api/appointments")
-      .then((response) => {
-        // Ensure that the response data is an array
-        setAppointments(Array.isArray(response.data) ? response.data : []);
+    fetch("http://localhost:5000/api/doctors/available")
+      .then((res) => res.json())
+      .then((data) => {
+        const doctorsWithSlots = data.map((doctor) => {
+          const availableSlots = doctor.availability.flatMap((day) =>
+            (day.timeSlots || [])
+              .filter((time) => time !== null)
+              .map((time) => ({
+                date: new Date(day.date).toISOString().split("T")[0],
+                time,
+              }))
+          );
+          return { ...doctor, availableSlots };
+        });
+        setDoctors(doctorsWithSlots);
       })
-      .catch((error) => {
-        console.error("Error fetching appointments:", error);
-      });
+      .catch((error) => console.error("Error fetching doctors:", error));
+
+    // 👇 Updated to include patientId in query
+    fetch(`http://localhost:5000/api/appointments?patientId=${user._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setAppointments(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => console.error("Error fetching appointments:", error));
   }, []);
 
   const handleRequestAppointment = () => {
     if (!selectedDoctor || !selectedSlot) {
-      alert("Please select a doctor and an available time slot.");
+      alert("Please select a doctor and a time slot.");
       return;
     }
 
+    const user = JSON.parse(localStorage.getItem("userInfo"));
+
     const newAppointment = {
+      patientId: user._id, // or user.id depending on your structure
       doctorId: selectedDoctor._id,
       doctorName: selectedDoctor.name,
       specialty: selectedDoctor.specialty,
@@ -53,54 +62,81 @@ const AppointmentsPage = () => {
       paymentStatus: "Pending",
     };
 
-    setPendingAppointment(newAppointment);
+    fetch("http://localhost:5000/api/appointments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newAppointment),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setAppointments([...appointments, data]);
+        setSelectedDoctor(null);
+        setSelectedSlot(null);
+        alert("Appointment requested! Awaiting doctor confirmation.");
+      })
+      .catch((error) => {
+        console.error("Error requesting appointment:", error);
+        alert("Error requesting appointment.");
+      });
+  };
+
+  const handlePaymentNow = (appointment) => {
+    setPendingAppointment(appointment);
     setShowPaymentModal(true);
   };
 
   const handlePayment = () => {
-    // Simulate payment process (Chapa integration)
-    axios
-      .post("/api/appointments", pendingAppointment)
-      .then((response) => {
-        setAppointments([...appointments, response.data]);
-        setPendingAppointment(null);
+    fetch(
+      `http://localhost:5000/api/appointments/${pendingAppointment._id}/pay`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((updatedAppt) => {
+        setAppointments(
+          appointments.map((appt) =>
+            appt._id === updatedAppt._id ? updatedAppt : appt
+          )
+        );
         setShowPaymentModal(false);
-        setSelectedDoctor(null);
-        setSelectedSlot(null);
-        alert("Payment successful! Appointment confirmed.");
+        setPendingAppointment(null);
+        alert("Payment successful!");
       })
       .catch((error) => {
-        console.error("Error processing payment:", error);
-        alert("Error processing payment.");
+        console.error("Payment failed:", error);
+        alert("Payment failed.");
       });
   };
 
   const handleReschedule = (appointmentId) => {
-    const appointment = appointments.find((appt) => appt._id === appointmentId);
-
+    const appointment = appointments.find((a) => a._id === appointmentId);
     if (
-      appointment.paymentStatus === "Paid" &&
-      appointment.status === "Declined"
+      appointment.status === "Declined" &&
+      appointment.paymentStatus === "Paid"
     ) {
       setSelectedDoctor(
         doctors.find((doc) => doc.name === appointment.doctorName)
       );
       setSelectedSlot({ date: appointment.date, time: appointment.time });
-      setShowPaymentModal(true);
-    } else {
-      alert("Appointment is not eligible for rescheduling.");
+      alert("Please choose a new time slot and request again.");
     }
   };
 
   const handleGoToChat = () => {
-    navigate("/chats");
+    navigate("/patient-chats");
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50 relative">
       <PatientNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-        {/* Available Doctors */}
+        {/* Header */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
           <FaCalendarAlt className="text-blue-600 text-4xl" />
           <div>
@@ -112,6 +148,8 @@ const AppointmentsPage = () => {
             </p>
           </div>
         </section>
+
+        {/* Doctor List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (
             <div
@@ -150,7 +188,7 @@ const AppointmentsPage = () => {
           ))}
         </div>
 
-        {/* Select Slot */}
+        {/* Time Slot Selection */}
         {selectedDoctor && (
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4 text-gray-800">
@@ -186,7 +224,7 @@ const AppointmentsPage = () => {
           </div>
         )}
 
-        {/* My Appointments */}
+        {/* Appointments List */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">
             My Appointments
@@ -218,28 +256,48 @@ const AppointmentsPage = () => {
                 >
                   <strong>Status:</strong> {appointment.status}
                 </p>
-
-                {/* Conditionally active/inactive chat button */}
-                <button
-                  onClick={handleGoToChat}
-                  disabled={appointment.status !== "Confirmed"}
-                  className={`mt-2 px-6 py-2 rounded-lg text-white transition-all ${
-                    appointment.status === "Confirmed"
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-gray-400 cursor-not-allowed"
+                <p
+                  className={`font-semibold ${
+                    appointment.paymentStatus === "Paid"
+                      ? "text-green-600"
+                      : "text-yellow-600"
                   }`}
                 >
-                  Go to Chat
-                </button>
+                  <strong>Payment:</strong> {appointment.paymentStatus}
+                </p>
 
-                {appointment.status === "Declined" && (
-                  <button
-                    onClick={() => handleReschedule(appointment._id)}
-                    className="mt-2 text-blue-600 underline block"
-                  >
-                    Reschedule Appointment (Payment Retained)
-                  </button>
-                )}
+                {/* Pay Now */}
+                {appointment.status === "Confirmed" &&
+                  appointment.paymentStatus === "Pending" && (
+                    <button
+                      onClick={() => handlePaymentNow(appointment)}
+                      className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Pay Now
+                    </button>
+                  )}
+
+                {/* Chat Access */}
+                {appointment.status === "Confirmed" &&
+                  appointment.paymentStatus === "Paid" && (
+                    <button
+                      onClick={handleGoToChat}
+                      className="mt-2 px-6 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700"
+                    >
+                      Go to Chat
+                    </button>
+                  )}
+
+                {/* Reschedule */}
+                {appointment.status === "Declined" &&
+                  appointment.paymentStatus === "Paid" && (
+                    <button
+                      onClick={() => handleReschedule(appointment._id)}
+                      className="mt-2 text-blue-600 underline block"
+                    >
+                      Reschedule Appointment (Payment Retained)
+                    </button>
+                  )}
               </div>
             ))
           )}
@@ -263,10 +321,7 @@ const AppointmentsPage = () => {
                   <strong>Time:</strong> {pendingAppointment.time}
                 </p>
                 <p>
-                  <strong>Amount:</strong>{" "}
-                  <span className="text-green-600 font-bold">
-                    {pendingAppointment.amount} ETB
-                  </span>
+                  <strong>Amount:</strong> {pendingAppointment.amount} ETB
                 </p>
               </div>
               <button
