@@ -1,21 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaCamera, FaSave, FaEdit, FaUser } from "react-icons/fa";
 import DoctorNav from "../../components/layout/DoctorNav";
 
 const DoctorProfilePage = () => {
   const [doctorInfo, setDoctorInfo] = useState({
-    name: "Dr. John Doe",
-    specialty: "Cardiologist",
-    bio: "Experienced cardiologist with over 15 years of practice specializing in heart disease management.",
-    yearsOfExperience: 15,
-    clinicName: "HeartCare Clinic",
-    clinicLocation: "123 Heart Ave, Addis Ababa, Ethiopia",
-    phone: "+251 911 234 567",
-    email: "johndoe@heartcare.com",
+    name: "",
+    specialty: "",
+    bio: "",
+    yearsOfExperience: 0,
+    clinicName: "",
+    clinicLocation: "",
+    phone: "",
+    email: "",
+    _id: "", // Doctor ID
+    medicalProfileId: "", // Medical Profile ID
   });
 
   const [profilePic, setProfilePic] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const fetchDoctorInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // Step 1: Get the logged-in doctor's basic auth info
+        const authRes = await fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!authRes.ok) throw new Error("Failed to fetch doctor auth info");
+        const authData = await authRes.json();
+
+        const doctorId = authData._id;
+        const fullName = `${authData.firstName} ${authData.lastName}`;
+
+        // Step 2: Get the medical profile using the doctor ID
+        const profileRes = await fetch(
+          `http://localhost:5000/api/medicalProfile/user/${doctorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        let profileData = {};
+        if (profileRes.ok) {
+          const data = await profileRes.json();
+          if (Array.isArray(data) && data.length > 0) {
+            profileData = data[0];
+          }
+        }
+
+        // Step 3: Merge data and update UI
+        setDoctorInfo({
+          name: fullName,
+          email: authData.email || "",
+          phone: "", // could be added from another source
+          bio: "",
+          clinicName: profileData.currentHospital || "",
+          clinicLocation: "",
+          specialty: profileData.specialty || "",
+          yearsOfExperience: profileData.yearsOfExperience || "",
+          _id: doctorId,
+          medicalProfileId: profileData._id || "",
+        });
+      } catch (error) {
+        console.error("Error fetching doctor profile:", error);
+      }
+    };
+
+    fetchDoctorInfo();
+  }, []);
 
   const handleProfilePicChange = (event) => {
     const file = event.target.files[0];
@@ -29,33 +88,68 @@ const DoctorProfilePage = () => {
     setDoctorInfo({ ...doctorInfo, [field]: value });
   };
 
-  const handleSaveChanges = () => {
-    setIsEditing(false);
-    alert("Changes saved successfully!");
+  const handleSaveChanges = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const payload = {
+        doctorId: doctorInfo._id,
+        yearsOfExperience: Number(doctorInfo.yearsOfExperience),
+        specialty: doctorInfo.specialty,
+        currentHospital: doctorInfo.clinicName,
+      };
+
+      const method = doctorInfo.medicalProfileId ? "PUT" : "POST";
+      const url = doctorInfo.medicalProfileId
+        ? `http://localhost:5000/api/medicalProfile/${doctorInfo.medicalProfileId}`
+        : `http://localhost:5000/api/medicalProfile`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Failed to save profile");
+
+      const data = await response.json();
+      alert("Profile saved successfully!");
+      setIsEditing(false);
+
+      // Update medicalProfileId if just created
+      if (!doctorInfo.medicalProfileId && data._id) {
+        setDoctorInfo((prev) => ({
+          ...prev,
+          medicalProfileId: data._id,
+        }));
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("Failed to save profile.");
+    }
   };
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
+  const handleEditClick = () => setIsEditing(true);
+  const handleCancelEdit = () => setIsEditing(false);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg  items-center flex gap-5">
-                  <FaUser className="text-blue-600 text-3xl" />
-                  <div><h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
-                  <p className="text-sm text-gray-500 mt-1">
-                    View and manage your personal and health information
-                  </p>
-                  </div>
-                </section>
+        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg items-center flex gap-5">
+          <FaUser className="text-blue-600 text-3xl" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              View and manage your personal and health information
+            </p>
+          </div>
+        </section>
 
-        <div className=" mx-auto px-6 space-y-10 pb-20">
+        <div className="mx-auto px-6 space-y-10 pb-20">
           {/* Profile Picture */}
           <div className="flex items-center space-x-6">
             <div className="relative">
@@ -83,7 +177,7 @@ const DoctorProfilePage = () => {
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-gray-800">
-                {doctorInfo.name}
+                Dr. {doctorInfo.name}
               </h2>
               <p className="text-gray-500">{doctorInfo.specialty}</p>
               <p className="text-gray-500">{doctorInfo.email}</p>

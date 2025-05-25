@@ -1,46 +1,122 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminNav from "../../components/layout/AdminNav";
 import { Search, Eye, FileDown, X } from "lucide-react";
 
-const dummyAppointments = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    doctorName: "Dr. Hana Alemu",
-    date: "2025-04-26 10:00 AM",
-    status: "Pending",
-    reason: "Regular checkup",
-  },
-  {
-    id: 2,
-    patientName: "Jane Smith",
-    doctorName: "Dr. Meles Teshome",
-    date: "2025-04-27 2:00 PM",
-    status: "Confirmed",
-    reason: "Skin rash consultation",
-  },
-  {
-    id: 3,
-    patientName: "Sara Kassa",
-    doctorName: "Dr. Sara Kebede",
-    date: "2025-04-28 3:30 PM",
-    status: "Rejected",
-    reason: "Child vaccination follow-up",
-  },
-];
-
 const ManageAppointments = () => {
-  const [appointments, setAppointments] = useState(dummyAppointments);
+  const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  const filteredAppointments = appointments.filter(
-    (appointment) =>
-      appointment.patientName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      appointment.doctorName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch patients
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:5000/api/user/role/patient",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch patients");
+        const data = await response.json();
+        const formattedPatients = data.map((p) => ({
+          ...p,
+          name: `${p.firstName} ${p.lastName}`,
+        }));
+        setPatients(formattedPatients);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+      }
+    };
+    fetchPatients();
+  }, []);
+
+  // Fetch doctors
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:5000/api/user/role/doctor",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch doctors");
+        const data = await response.json();
+        const formattedDoctors = data.map((d) => ({
+          ...d,
+          name: `${d.firstName} ${d.lastName}`,
+        }));
+        setDoctors(formattedDoctors);
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  // Fetch appointments
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:5000/api/appointment",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch appointments");
+        const data = await response.json();
+        setAppointments(data);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  // Helpers to get names
+  const getPatientName = (id) => {
+    const patient = patients.find((p) => p._id === id);
+    return patient ? patient.name : "Unknown Patient";
+  };
+
+  const getDoctorName = (id) => {
+    const doctor = doctors.find((d) => d._id === id);
+    return doctor ? doctor.name : "Unknown Doctor";
+  };
+
+  // Format only appointmentDate as YYYY-MM-DD
+  const formatDateOnly = (dateStr) => {
+    try {
+      if (!dateStr) return "Invalid date";
+      const dateObj = new Date(dateStr);
+      return dateObj.toISOString().substring(0, 10);
+    } catch {
+      return "Invalid date";
+    }
+  };
+
+  // Filter appointments by patient or doctor name
+  const filteredAppointments = appointments.filter((appointment) => {
+    const patientName = getPatientName(appointment.patientId);
+    const doctorName = getDoctorName(appointment.doctorId);
+    return (
+      patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctorName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="flex bg-gray-50 min-h-screen relative">
@@ -89,25 +165,28 @@ const ManageAppointments = () => {
             <tbody>
               {filteredAppointments.map((appointment) => (
                 <tr
-                  key={appointment.id}
+                  key={appointment._id}
                   className="border-t hover:bg-gray-50 transition"
                 >
                   <td className="px-6 py-4 font-medium">
-                    {appointment.patientName}
+                    {getPatientName(appointment.patientId)}
                   </td>
-                  <td className="px-6 py-4">{appointment.doctorName}</td>
-                  <td className="px-6 py-4">{appointment.date}</td>
+                  <td className="px-6 py-4">{getDoctorName(appointment.doctorId)}</td>
+                  <td className="px-6 py-4">
+                    {formatDateOnly(appointment.appointmentDate)}
+                  </td>
                   <td className="px-6 py-4">
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${
-                        appointment.status === "Confirmed"
+                        appointment.appointmentStatus === "accepted"
                           ? "bg-green-100 text-green-700"
-                          : appointment.status === "Pending"
+                          : appointment.appointmentStatus === "pending"
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-red-100 text-red-700"
                       }`}
                     >
-                      {appointment.status}
+                      {appointment.appointmentStatus.charAt(0).toUpperCase() +
+                        appointment.appointmentStatus.slice(1)}
                     </span>
                   </td>
                   <td className="px-6 py-4 flex items-center justify-center gap-2">
@@ -150,23 +229,20 @@ const ManageAppointments = () => {
             <div className="space-y-2 text-sm text-gray-700">
               <p>
                 <span className="font-semibold">Patient:</span>{" "}
-                {selectedAppointment.patientName}
+                {getPatientName(selectedAppointment.patientId)}
               </p>
               <p>
                 <span className="font-semibold">Doctor:</span>{" "}
-                {selectedAppointment.doctorName}
+                {getDoctorName(selectedAppointment.doctorId)}
               </p>
               <p>
                 <span className="font-semibold">Date:</span>{" "}
-                {selectedAppointment.date}
+                {formatDateOnly(selectedAppointment.appointmentDate)}
               </p>
               <p>
                 <span className="font-semibold">Status:</span>{" "}
-                {selectedAppointment.status}
-              </p>
-              <p>
-                <span className="font-semibold">Reason:</span>{" "}
-                {selectedAppointment.reason}
+                {selectedAppointment.appointmentStatus.charAt(0).toUpperCase() +
+                  selectedAppointment.appointmentStatus.slice(1)}
               </p>
             </div>
           </div>

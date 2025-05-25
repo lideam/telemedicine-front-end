@@ -37,6 +37,8 @@ import ManageAppointments from "../pages/admin/ManageAppointments";
 import Earnings from "../pages/admin/Earnings";
 import SystemSettings from "../pages/admin/SystemSettings";
 import AdminAccess from "../pages/admin/AdminAccess";
+import ForgotPassword from "../components/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 
 const AppRoutes = () => {
   return (
@@ -52,6 +54,7 @@ const AppRoutes = () => {
         <Route path="/doctor-login" element={<DoctorLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes for Patients */}
         <Route
@@ -59,6 +62,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={["patient"]}>
               <PatientDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <ProtectedRoute allowedRoles={["patient","doctor"]}>
+              <ForgotPassword />
             </ProtectedRoute>
           }
         />

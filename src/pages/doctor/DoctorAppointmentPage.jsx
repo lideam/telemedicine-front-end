@@ -26,6 +26,7 @@ const DoctorAppointmentPage = () => {
   const [doctorId, setDoctorId] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [loadingSave, setLoadingSave] = useState(false);
+  const [patientsMap, setPatientsMap] = useState({});
 
   useEffect(() => {
     const fetchDoctorAndSchedule = async () => {
@@ -34,7 +35,7 @@ const DoctorAppointmentPage = () => {
 
       const userInfo = JSON.parse(storedUserInfo);
       const userId = userInfo.user?._id;
-      const token = userInfo.token; // or wherever your token is stored
+      const token = userInfo.token;
 
       if (!userId) {
         console.error("User ID not found in localStorage.");
@@ -51,18 +52,17 @@ const DoctorAppointmentPage = () => {
             },
           }
         );
+
         const doctorData = await doctorRes.json();
 
         if (doctorRes.ok && doctorData._id) {
           setDoctorId(doctorData._id);
 
-          // ✅ FETCH SCHEDULE for this doctor
+          // Fetch schedule
           const scheduleRes = await fetch(
             `http://localhost:5000/api/schedule/user/${doctorData._id}`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
 
@@ -73,7 +73,49 @@ const DoctorAppointmentPage = () => {
             console.warn("No schedule found for this doctor yet.");
           }
 
-          // Optionally: fetch appointments too here
+          // Fetch appointments
+          const appointmentRes = await fetch(
+            `http://localhost:5000/api/appointment/doctor/${doctorData._id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (appointmentRes.ok) {
+            const appointmentsData = await appointmentRes.json();
+            setAppointments(appointmentsData);
+
+            // --- NEW: Fetch patient details for all unique patientIds ---
+            const uniquePatientIds = [
+              ...new Set(appointmentsData.map((appt) => appt.patientId)),
+            ].filter(Boolean); // filter out any null/undefined
+
+            // Fetch all patients in parallel
+            const patientFetches = uniquePatientIds.map((pid) =>
+              fetch(`http://localhost:5000/api/user/${pid}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }).then((res) => {
+                if (!res.ok) throw new Error(`Failed to fetch patient ${pid}`);
+                return res.json();
+              })
+            );
+
+            try {
+              const patientsData = await Promise.all(patientFetches);
+              const map = {};
+              patientsData.forEach((p) => {
+                map[p._id] = p;
+              });
+              setPatientsMap(map);
+            } catch (patientFetchError) {
+              console.error("Error fetching patients data", patientFetchError);
+            }
+          } else {
+            console.warn("No appointments found.");
+          }
         } else {
           console.error("Doctor not found for this user.");
         }
@@ -249,12 +291,18 @@ const DoctorAppointmentPage = () => {
   // Appointment status update functions (unchanged)
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
+      const storedUserInfo = localStorage.getItem("userInfo");
+      const token = storedUserInfo ? JSON.parse(storedUserInfo).token : null;
+
       const response = await fetch(
-        `http://localhost:5000/api/appointments/${appointmentId}/status`,
+        `http://localhost:5000/api/appointment/update-status/${appointmentId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ appointmentStatus: newStatus }),
         }
       );
       const updated = await response.json();
@@ -470,43 +518,48 @@ const DoctorAppointmentPage = () => {
           <h2 className="text-xl font-semibold mb-4">
             Current Fetched Schedule
           </h2>
-          <div className="space-y-2">
-            <div>
-              <strong>Session Duration:</strong> {schedule.sessionDuration}{" "}
-              minutes
-            </div>
-            <div>
-              <strong>Session Price:</strong> $
-              {schedule.sessionPrice.toFixed(2)}
-            </div>
-            <div>
-              <strong>Weekly Schedule:</strong>
-              <ul className="list-disc ml-6 mt-1">
-                {daysOfWeek.map((day) => (
-                  <li key={day} className="capitalize">
-                    {day}:{" "}
-                    {schedule.weeklySchedule[day].length > 0
-                      ? schedule.weeklySchedule[day].join(", ")
-                      : "No slots"}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <strong>Exceptions:</strong>
-              <ul className="list-disc ml-6 mt-1">
-                {schedule.exceptions.length > 0 ? (
-                  schedule.exceptions.map((ex, idx) => (
-                    <li key={idx}>
-                      {ex.date.split("T")[0]}: {ex.timeSlots.join(", ")}
+          {fetchedSchedule ? (
+            <div className="space-y-2">
+              <div>
+                <strong>Session Duration:</strong>{" "}
+                {fetchedSchedule.sessionDuration} minutes
+              </div>
+              <div>
+                <strong>Session Price:</strong> $
+                {fetchedSchedule.sessionPrice.toFixed(2)}
+              </div>
+              <div>
+                <strong>Weekly Schedule:</strong>
+                <ul className="list-disc ml-6 mt-1">
+                  {daysOfWeek.map((day) => (
+                    <li key={day} className="capitalize">
+                      {day}:{" "}
+                      {fetchedSchedule.weeklySchedule?.[day]?.length > 0
+                        ? fetchedSchedule.weeklySchedule[day].join(", ")
+                        : "No slots"}
                     </li>
-                  ))
-                ) : (
-                  <li>No exceptions</li>
-                )}
-              </ul>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <strong>Exceptions:</strong>
+                <ul className="list-disc ml-6 mt-1">
+                  {fetchedSchedule.exceptions.length > 0 ? (
+                    fetchedSchedule.exceptions.map((ex, idx) => (
+                      <li key={idx}>
+                        {ex.date.split("T")[0]}: {ex.timeSlots.join(", ")}
+                      </li>
+                    ))
+                  ) : (
+                    <li>No exceptions</li>
+                  )}
+                </ul>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p>No schedule fetched yet.</p>
+          )}
+
           <button
             onClick={() => {
               if (fetchedSchedule) {
@@ -521,7 +574,6 @@ const DoctorAppointmentPage = () => {
           </button>
         </section>
 
-        {/* Appointments Section */}
         <section className="bg-white p-6 rounded shadow">
           <h2 className="text-xl font-semibold mb-4">Appointments</h2>
           {appointments.length === 0 ? (
@@ -540,29 +592,34 @@ const DoctorAppointmentPage = () => {
               <tbody>
                 {appointments.map((appt) => (
                   <tr key={appt._id} className="border-b hover:bg-gray-100">
-                    <td className="py-2 px-4">{appt.patientName}</td>
                     <td className="py-2 px-4">
-                      {new Date(appt.date).toLocaleDateString()}
+                      {patientsMap[appt.patientId]
+                        ? `${patientsMap[appt.patientId].firstName} ${
+                            patientsMap[appt.patientId].lastName
+                          }`
+                        : "Loading..."}
                     </td>
-                    <td className="py-2 px-4">{appt.time}</td>
-                    <td className="py-2 px-4">{appt.status}</td>
+                    <td className="py-2 px-4">
+                      {new Date(appt.appointmentDate).toLocaleDateString()}
+                    </td>
+                    <td className="py-2 px-4">{appt.appointmentTime}</td>
+                    <td className="py-2 px-4">{appt.appointmentStatus}</td>
+                    <td className="py-2 px-4 font-semibold">
+                      {appt.appointmentStatus}
+                    </td>
                     <td className="py-2 px-4 space-x-2">
-                      {appt.status !== "Confirmed" && (
-                        <button
-                          onClick={() => handleConfirmAppointment(appt._id)}
-                          className="bg-green-600 px-3 py-1 rounded text-white hover:bg-green-700"
-                        >
-                          Confirm
-                        </button>
-                      )}
-                      {appt.status !== "Declined" && (
-                        <button
-                          onClick={() => handleCancelAppointment(appt._id)}
-                          className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
-                        >
-                          Cancel
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleConfirmAppointment(appt._id)}
+                        className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => handleCancelAppointment(appt._id)}
+                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                      >
+                        Cancel
+                      </button>
                     </td>
                   </tr>
                 ))}
