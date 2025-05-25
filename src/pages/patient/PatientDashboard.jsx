@@ -24,7 +24,14 @@ import { motion } from "framer-motion";
 import "react-calendar/dist/Calendar.css";
 import PatientNav from "../../components/layout/PatientNav";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const PatientDashboard = () => {
   const [userName, setUserName] = useState("John Doe");
@@ -33,7 +40,10 @@ const PatientDashboard = () => {
     const storedUser = localStorage.getItem("userInfo");
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      setUserName(parsed.name || "John Doe");
+      const fullName = `${parsed.firstName || ""} ${
+        parsed.lastName || ""
+      }`.trim();
+      setUserName(fullName || "John Doe");
     }
   }, []);
 
@@ -106,25 +116,36 @@ const PatientDashboard = () => {
             className="w-16 h-16 rounded-full object-cover border-2 border-blue-600"
           />
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Welcome, {userName}</h1>
-            <p className="text-gray-600 mt-1">Your health dashboard at a glance</p>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Welcome, {userName}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Your health dashboard at a glance
+            </p>
           </div>
         </section>
 
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-md mb-6">
           <p className="font-medium">⚠️ Please complete your health profile.</p>
-          <Link to="/patient-health-records" className="text-gray-700 hover:text-blue-600 flex items-center">
+          <Link
+            to="/patient-health-records"
+            className="text-gray-700 hover:text-blue-600 flex items-center"
+          >
             <FaFileMedical className="mr-2" /> Health Records
           </Link>
         </div>
 
         {/* Health Overview */}
         <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Health Overview</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Health Overview
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6">
             {Object.entries(healthStats).map(([key, value]) => (
               <div key={key} className="text-center bg-blue-50 p-3 rounded-lg">
-                <p className="text-blue-600 capitalize font-medium">{key.replace(/([A-Z])/g, " $1")}</p>
+                <p className="text-blue-600 capitalize font-medium">
+                  {key.replace(/([A-Z])/g, " $1")}
+                </p>
                 <p className="text-xl font-bold">{value}</p>
               </div>
             ))}
@@ -134,14 +155,23 @@ const PatientDashboard = () => {
 
         {/* Appointments with Calendar */}
         <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Upcoming Appointments</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Upcoming Appointments
+          </h3>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className="border p-4 rounded-lg flex justify-between items-center shadow-sm bg-blue-50">
+                <div
+                  key={appointment.id}
+                  className="border p-4 rounded-lg flex justify-between items-center shadow-sm bg-blue-50"
+                >
                   <div>
-                    <h4 className="font-bold text-gray-800">{appointment.doctorName}</h4>
-                    <p className="text-sm text-gray-600">{appointment.specialty}</p>
+                    <h4 className="font-bold text-gray-800">
+                      {appointment.doctorName}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {appointment.specialty}
+                    </p>
                     <p className="text-sm text-gray-600">
                       {appointment.date} at {appointment.time}
                     </p>
@@ -161,7 +191,9 @@ const PatientDashboard = () => {
 
         {/* Health Tips with Animation */}
         <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Health Tips</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Health Tips
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {healthTips.map((tip, index) => (
               <motion.div

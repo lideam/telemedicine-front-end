@@ -25,7 +25,6 @@ const AdminLogin = () => {
     const payload = {
       email,
       password,
-      role: "admin",
     };
 
     try {
@@ -43,7 +42,7 @@ const AdminLogin = () => {
 
       // Save user info & token
       localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
+      localStorage.setItem("role", data.user.role);
 
       // Navigate to the intended page
       navigate(from, { replace: true });

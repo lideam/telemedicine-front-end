@@ -29,7 +29,6 @@ const DoctorAuth = () => {
     const payload = {
       email: formData.email,
       password: formData.password,
-      role: "doctor",
     };
 
     try {
@@ -48,8 +47,8 @@ const DoctorAuth = () => {
       // Save user info & token temporarily
       localStorage.setItem("userInfo", JSON.stringify(data));
       localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("userId", data._id); // ✅ correct usage based on response
+      localStorage.setItem("role", data.user.role); // ✅ FIXED
+      localStorage.setItem("userId", data.user._id); // ✅ FIXED
 
       // Navigate to doctor dashboard
       navigate("/doctor-dashboard");

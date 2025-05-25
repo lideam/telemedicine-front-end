@@ -68,8 +68,9 @@ const DoctorDashboard = () => {
     if (!storedUserInfo) {
       navigate("/doctor-login");
     } else {
-      const user = JSON.parse(storedUserInfo);
-      setDoctorName(user.name);
+      const parsed = JSON.parse(storedUserInfo);
+      const firstName = parsed?.user?.firstName || "Doctor";
+      setDoctorName(firstName);
     }
   }, [navigate]);
 

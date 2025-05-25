@@ -3,154 +3,250 @@ import DoctorNav from "../../components/layout/DoctorNav";
 import { FaCalendarAlt } from "react-icons/fa";
 
 const DoctorAppointmentPage = () => {
-  const [availability, setAvailability] = useState([]);
-  const [newSlot, setNewSlot] = useState({ date: "", time: "" });
-  const [loading, setLoading] = useState(false);
-  const [appointments, setAppointments] = useState([]);
+  const initialScheduleState = {
+    weeklySchedule: {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    },
+    exceptions: [],
+    sessionDuration: 30,
+    sessionPrice: 0,
+    _id: null,
+  };
+
+  const [schedule, setSchedule] = useState(initialScheduleState);
+  const [editMode, setEditMode] = useState(false);
+  const [fetchedSchedule, setFetchedSchedule] = useState(null);
+
   const [doctorId, setDoctorId] = useState(null);
-  const [editingSlotId, setEditingSlotId] = useState(null);
-  const [updatedSlot, setUpdatedSlot] = useState({ time: "" });
+  const [appointments, setAppointments] = useState([]);
+  const [loadingSave, setLoadingSave] = useState(false);
 
   useEffect(() => {
-    const fetchDoctorData = async () => {
+    const fetchDoctorAndSchedule = async () => {
       const storedUserInfo = localStorage.getItem("userInfo");
       if (!storedUserInfo) return;
-      const user = JSON.parse(storedUserInfo);
+
+      const userInfo = JSON.parse(storedUserInfo);
+      const userId = userInfo.user?._id;
+      const token = userInfo.token; // or wherever your token is stored
+
+      if (!userId) {
+        console.error("User ID not found in localStorage.");
+        return;
+      }
 
       try {
-        // Fetch doctor info
         const doctorRes = await fetch(
-          `http://localhost:5000/api/doctors/user/${user._id}`
+          `http://localhost:5000/api/user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
         const doctorData = await doctorRes.json();
 
         if (doctorRes.ok && doctorData._id) {
           setDoctorId(doctorData._id);
-          setAvailability(doctorData.availability || []);
 
-          // Fetch appointments for this doctor
-          const apptRes = await fetch(
-            `http://localhost:5000/api/appointments/doctor/${doctorData._id}`
+          // ✅ FETCH SCHEDULE for this doctor
+          const scheduleRes = await fetch(
+            `http://localhost:5000/api/schedule/user/${doctorData._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
-          const appts = await apptRes.json();
 
-          if (apptRes.ok) {
-            setAppointments(appts);
+          if (scheduleRes.ok) {
+            const scheduleData = await scheduleRes.json();
+            setFetchedSchedule(scheduleData);
           } else {
-            console.error("Failed to fetch appointments.");
+            console.warn("No schedule found for this doctor yet.");
           }
+
+          // Optionally: fetch appointments too here
         } else {
           console.error("Doctor not found for this user.");
         }
       } catch (error) {
-        console.error("Error fetching doctor or appointments:", error);
+        console.error(
+          "Error fetching doctor, schedule or appointments:",
+          error
+        );
       }
     };
 
-    fetchDoctorData();
+    fetchDoctorAndSchedule();
   }, []);
 
-  const handleAddAvailability = async (e) => {
-    e.preventDefault();
-    if (!newSlot.date || !newSlot.time) {
-      alert("Please enter both date and time.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/doctors/${doctorId}/availability`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date: newSlot.date,
-            timeSlots: [newSlot.time],
-          }),
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
-        setAvailability((prev) => [
-          ...prev,
-          { _id: data._id, date: newSlot.date, timeSlots: [newSlot.time] },
-        ]);
-        setNewSlot({ date: "", time: "" });
-      } else {
-        alert("Error: " + data.message);
-      }
-    } catch {
-      alert("Error adding availability");
-    } finally {
-      setLoading(false);
-    }
+  // Handle changes for weekly schedule timeslots
+  const handleWeeklyTimeChange = (day, index, value) => {
+    const updatedDaySlots = [...schedule.weeklySchedule[day]];
+    updatedDaySlots[index] = value;
+    setSchedule((prev) => ({
+      ...prev,
+      weeklySchedule: { ...prev.weeklySchedule, [day]: updatedDaySlots },
+    }));
   };
 
-  const handleUpdateAvailability = async (availabilityId) => {
-    if (!updatedSlot.time) {
-      alert("Please enter the time.");
-      return;
-    }
+  const handleAddWeeklyTimeSlot = (day) => {
+    setSchedule((prev) => ({
+      ...prev,
+      weeklySchedule: {
+        ...prev.weeklySchedule,
+        [day]: [...prev.weeklySchedule[day], ""],
+      },
+    }));
+  };
+
+  const handleRemoveWeeklyTimeSlot = (day, index) => {
+    const updatedDaySlots = schedule.weeklySchedule[day].filter(
+      (_, i) => i !== index
+    );
+    setSchedule((prev) => ({
+      ...prev,
+      weeklySchedule: { ...prev.weeklySchedule, [day]: updatedDaySlots },
+    }));
+  };
+
+  // Handle changes for exceptions
+  const handleExceptionDateChange = (index, value) => {
+    const updatedExceptions = [...schedule.exceptions];
+    updatedExceptions[index].date = value;
+    setSchedule((prev) => ({ ...prev, exceptions: updatedExceptions }));
+  };
+
+  const handleExceptionTimeChange = (exIndex, timeIndex, value) => {
+    const updatedExceptions = [...schedule.exceptions];
+    updatedExceptions[exIndex].timeSlots[timeIndex] = value;
+    setSchedule((prev) => ({ ...prev, exceptions: updatedExceptions }));
+  };
+
+  const handleAddExceptionTimeSlot = (exIndex) => {
+    const updatedExceptions = [...schedule.exceptions];
+    updatedExceptions[exIndex].timeSlots.push("");
+    setSchedule((prev) => ({ ...prev, exceptions: updatedExceptions }));
+  };
+
+  const handleRemoveExceptionTimeSlot = (exIndex, timeIndex) => {
+    const updatedExceptions = [...schedule.exceptions];
+    updatedExceptions[exIndex].timeSlots = updatedExceptions[
+      exIndex
+    ].timeSlots.filter((_, i) => i !== timeIndex);
+    setSchedule((prev) => ({ ...prev, exceptions: updatedExceptions }));
+  };
+
+  const handleAddException = () => {
+    setSchedule((prev) => ({
+      ...prev,
+      exceptions: [...prev.exceptions, { date: "", timeSlots: [] }],
+    }));
+  };
+
+  const handleRemoveException = (index) => {
+    setSchedule((prev) => ({
+      ...prev,
+      exceptions: prev.exceptions.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Save schedule handler
+  const saveSchedule = async () => {
+    if (!doctorId) return alert("Doctor ID missing!");
+    setLoadingSave(true);
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/doctors/${doctorId}/availability/${availabilityId}`,
+      const storedUserInfo = localStorage.getItem("userInfo");
+      if (!storedUserInfo) {
+        alert("User not authenticated");
+        setLoadingSave(false);
+        return;
+      }
+      const userInfo = JSON.parse(storedUserInfo);
+      const token = userInfo.token;
+
+      // Save or update the main schedule
+      const method = schedule._id ? "PUT" : "POST";
+      const url = schedule._id
+        ? `http://localhost:5000/api/schedule/${schedule._id}`
+        : `http://localhost:5000/api/schedule`;
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // <-- Add this!
+        },
+        body: JSON.stringify({ ...schedule, doctorId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Failed to save schedule: " + err.message);
+        setLoadingSave(false);
+        return;
+      }
+
+      const savedData = await res.json();
+      setSchedule(savedData);
+
+      // Now update weekly schedule explicitly
+      await fetch(
+        `http://localhost:5000/api/schedule/update-weekly-schedule/${savedData._id}`,
         {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // <-- Add here too!
+          },
           body: JSON.stringify({
-            timeSlots: [updatedSlot.time],
+            weeklySchedule: savedData.weeklySchedule,
           }),
         }
       );
-      const data = await response.json();
 
-      if (response.ok) {
-        setAvailability((prev) =>
-          prev.map((slot) =>
-            slot._id === availabilityId
-              ? {
-                  ...slot,
-                  timeSlots: [updatedSlot.time],
-                }
-              : slot
-          )
-        );
-        setEditingSlotId(null);
-      } else {
-        console.error("Error:", data.message);
-        alert("Update failed: " + data.message);
+      // Update exceptions
+      for (const exception of savedData.exceptions) {
+        if (exception._id) {
+          await fetch(
+            `http://localhost:5000/api/schedule/update-exception-by-date/${savedData._id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // <-- And here!
+              },
+              body: JSON.stringify({
+                date: exception.date,
+                timeSlots: exception.timeSlots,
+              }),
+            }
+          );
+        }
       }
+
+      alert("Schedule and exceptions saved successfully!");
+      setFetchedSchedule(savedData); // Update reference
+      setEditMode(false); // Exit edit mode
+      setSchedule(initialScheduleState); // ✅ Reset form
     } catch (error) {
-      console.error("Error updating availability:", error);
-      alert("Error updating availability.");
+      console.error(error);
+      alert("Error saving schedule");
+    } finally {
+      setLoadingSave(false);
     }
   };
 
-  const handleEditAvailability = (slot) => {
-    setEditingSlotId(slot._id);
-    setUpdatedSlot({ time: slot.timeSlots[0] });
-  };
-
-  const handleRemoveAvailability = async (availabilityId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/doctors/${doctorId}/availability/${availabilityId}`,
-        { method: "DELETE" }
-      );
-      const data = await response.json();
-      if (response.ok) {
-        setAvailability((prev) =>
-          prev.filter((slot) => slot._id !== availabilityId)
-        );
-      } else {
-        alert("Delete failed: " + data.message);
-      }
-    } catch {
-      alert("Error deleting availability.");
-    }
-  };
-
+  // Appointment status update functions (unchanged)
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
       const response = await fetch(
@@ -184,6 +280,16 @@ const DoctorAppointmentPage = () => {
     handleStatusUpdate(appointmentId, "Declined");
   };
 
+  const daysOfWeek = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
@@ -193,145 +299,275 @@ const DoctorAppointmentPage = () => {
             <FaCalendarAlt className="text-blue-600 text-3xl" />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                Doctor's Appointments
+                Doctor's Appointments & Schedule
               </h1>
               <p className="text-gray-500">
-                Manage your schedule and appointments
+                Manage your weekly schedule, exceptions, and appointments
               </p>
             </div>
           </div>
         </section>
 
+        {/* Weekly Schedule Section */}
         <section className="bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Set Availability</h2>
-          <form
-            onSubmit={handleAddAvailability}
-            className="flex gap-3 items-center mb-4"
-          >
-            <input
-              type="date"
-              value={newSlot.date}
-              onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })}
-              required
-              className="border px-2 py-1 rounded"
-            />
-            <input
-              type="time"
-              value={newSlot.time}
-              onChange={(e) => setNewSlot({ ...newSlot, time: e.target.value })}
-              required
-              className="border px-2 py-1 rounded"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
-            >
-              {loading ? "Adding..." : "Add"}
-            </button>
-          </form>
-          {availability.length > 0 ? (
-            availability.map((slot) => (
+          <h2 className="text-xl font-semibold mb-4">Weekly Schedule</h2>
+          {daysOfWeek.map((day) => (
+            <div key={day} className="mb-4 border-b pb-3">
+              <h3 className="capitalize font-semibold mb-2">{day}</h3>
+              <div className="flex flex-wrap gap-2 items-center">
+                {schedule.weeklySchedule[day].map((time, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    <input
+                      type="time"
+                      value={time}
+                      onChange={(e) =>
+                        handleWeeklyTimeChange(day, index, e.target.value)
+                      }
+                      className="border px-2 py-1 rounded"
+                    />
+                    <button
+                      onClick={() => handleRemoveWeeklyTimeSlot(day, index)}
+                      className="text-red-600 font-bold"
+                      type="button"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => handleAddWeeklyTimeSlot(day)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                  type="button"
+                >
+                  Add Time Slot
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* Exceptions Section */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Exception Dates</h2>
+          {schedule.exceptions.length > 0 ? (
+            schedule.exceptions.map((ex, idx) => (
               <div
-                key={slot._id}
-                className="border p-3 mb-2 rounded bg-gray-50"
+                key={idx}
+                className="mb-4 border p-3 rounded bg-gray-50 flex flex-col gap-2"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <strong>{new Date(slot.date).toLocaleDateString()}:</strong>{" "}
-                    {slot.timeSlots.join(", ")}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="text-blue-600"
-                      onClick={() => handleEditAvailability(slot)}
-                    >
-                      Edit Availability
-                    </button>
-
-                    <button
-                      className="text-red-600"
-                      onClick={() => handleRemoveAvailability(slot._id)}
-                    >
-                      Remove Availability
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <label>
+                    Date:{" "}
+                    <input
+                      type="date"
+                      value={ex.date ? ex.date.split("T")[0] : ""}
+                      onChange={(e) =>
+                        handleExceptionDateChange(idx, e.target.value)
+                      }
+                      className="border rounded px-2 py-1"
+                    />
+                  </label>
+                  <button
+                    onClick={() => handleRemoveException(idx)}
+                    className="ml-auto text-red-600 font-bold"
+                    type="button"
+                  >
+                    Remove Exception
+                  </button>
                 </div>
-
-                {editingSlotId === slot._id && (
-                  <div className="mt-4">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleUpdateAvailability(slot._id);
-                      }}
-                      className="flex gap-3"
-                    >
+                <div className="flex flex-wrap gap-2 items-center">
+                  {ex.timeSlots.map((time, tIdx) => (
+                    <div key={tIdx} className="flex items-center gap-1">
                       <input
                         type="time"
-                        value={updatedSlot.time}
+                        value={time}
                         onChange={(e) =>
-                          setUpdatedSlot({
-                            ...updatedSlot,
-                            time: e.target.value,
-                          })
+                          handleExceptionTimeChange(idx, tIdx, e.target.value)
                         }
-                        required
                         className="border px-2 py-1 rounded"
                       />
                       <button
-                        type="submit"
-                        className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                        onClick={() => handleRemoveExceptionTimeSlot(idx, tIdx)}
+                        className="text-red-600 font-bold"
+                        type="button"
                       >
-                        Save Changes
+                        &times;
                       </button>
-                    </form>
-                  </div>
-                )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => handleAddExceptionTimeSlot(idx)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                    type="button"
+                  >
+                    Add Time Slot
+                  </button>
+                </div>
               </div>
             ))
           ) : (
-            <p>No availability set.</p>
+            <p>No exceptions added.</p>
           )}
+          <button
+            onClick={handleAddException}
+            className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            type="button"
+          >
+            Add Exception
+          </button>
         </section>
 
-        <section className="bg-white p-6 rounded shadow mt-6">
-          <h2 className="text-xl font-semibold mb-4">Appointments</h2>
-          {appointments.length > 0 ? (
-            appointments.map((appointment) => (
-              <div
-                key={appointment._id}
-                className="flex justify-between items-center mb-3 border p-3 rounded bg-gray-50"
-              >
-                <div>
-                  <strong>
-                    {appointment.patientId?.name || "Unknown Patient"}
-                  </strong>
+        {/* Session Info Section */}
+        <section className="bg-white p-6 rounded shadow max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Session Info</h2>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">
+              Session Duration (minutes):
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={schedule.sessionDuration}
+              onChange={(e) =>
+                setSchedule((prev) => ({
+                  ...prev,
+                  sessionDuration: Number(e.target.value),
+                }))
+              }
+              className="border rounded px-3 py-1 w-full"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Session Price ($):</label>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              value={schedule.sessionPrice}
+              onChange={(e) =>
+                setSchedule((prev) => ({
+                  ...prev,
+                  sessionPrice: Number(e.target.value),
+                }))
+              }
+              className="border rounded px-3 py-1 w-full"
+            />
+          </div>
+          <button
+            onClick={saveSchedule}
+            disabled={loadingSave}
+            className={`mt-4 px-6 py-2 rounded text-white ${
+              loadingSave ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+            type="button"
+          >
+            {loadingSave ? "Saving..." : "Save Schedule"}
+          </button>
+        </section>
 
-                  <div>
-                    {new Date(appointment.date).toLocaleDateString()} |{" "}
-                    {appointment.time} -{" "}
-                    <span className="font-semibold">{appointment.status}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                    onClick={() => handleConfirmAppointment(appointment._id)}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                    onClick={() => handleCancelAppointment(appointment._id)}
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))
+        {/* Fetched Schedule Summary Section */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">
+            Current Fetched Schedule
+          </h2>
+          <div className="space-y-2">
+            <div>
+              <strong>Session Duration:</strong> {schedule.sessionDuration}{" "}
+              minutes
+            </div>
+            <div>
+              <strong>Session Price:</strong> $
+              {schedule.sessionPrice.toFixed(2)}
+            </div>
+            <div>
+              <strong>Weekly Schedule:</strong>
+              <ul className="list-disc ml-6 mt-1">
+                {daysOfWeek.map((day) => (
+                  <li key={day} className="capitalize">
+                    {day}:{" "}
+                    {schedule.weeklySchedule[day].length > 0
+                      ? schedule.weeklySchedule[day].join(", ")
+                      : "No slots"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <strong>Exceptions:</strong>
+              <ul className="list-disc ml-6 mt-1">
+                {schedule.exceptions.length > 0 ? (
+                  schedule.exceptions.map((ex, idx) => (
+                    <li key={idx}>
+                      {ex.date.split("T")[0]}: {ex.timeSlots.join(", ")}
+                    </li>
+                  ))
+                ) : (
+                  <li>No exceptions</li>
+                )}
+              </ul>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (fetchedSchedule) {
+                setSchedule(fetchedSchedule);
+                setEditMode(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+            className="mt-4 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+          >
+            Edit Schedule
+          </button>
+        </section>
+
+        {/* Appointments Section */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Appointments</h2>
+          {appointments.length === 0 ? (
+            <p>No appointments yet.</p>
           ) : (
-            <p>No upcoming appointments.</p>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-2 px-4">Patient Name</th>
+                  <th className="py-2 px-4">Date</th>
+                  <th className="py-2 px-4">Time</th>
+                  <th className="py-2 px-4">Status</th>
+                  <th className="py-2 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments.map((appt) => (
+                  <tr key={appt._id} className="border-b hover:bg-gray-100">
+                    <td className="py-2 px-4">{appt.patientName}</td>
+                    <td className="py-2 px-4">
+                      {new Date(appt.date).toLocaleDateString()}
+                    </td>
+                    <td className="py-2 px-4">{appt.time}</td>
+                    <td className="py-2 px-4">{appt.status}</td>
+                    <td className="py-2 px-4 space-x-2">
+                      {appt.status !== "Confirmed" && (
+                        <button
+                          onClick={() => handleConfirmAppointment(appt._id)}
+                          className="bg-green-600 px-3 py-1 rounded text-white hover:bg-green-700"
+                        >
+                          Confirm
+                        </button>
+                      )}
+                      {appt.status !== "Declined" && (
+                        <button
+                          onClick={() => handleCancelAppointment(appt._id)}
+                          className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </section>
       </main>

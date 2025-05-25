@@ -7,12 +7,10 @@ const ManageDoctors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
   const [newDoctor, setNewDoctor] = useState({
-    name: "",
-    specialty: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
-    phone: "",
-    clinic: "",
   });
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
@@ -32,33 +30,46 @@ const ManageDoctors = () => {
 
   const filteredDoctors = doctors.filter(
     (doc) =>
-      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+      doc.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.specialty?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddDoctor = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/doctors", {
+      const doctorToAdd = {
+        firstName: newDoctor.firstName,
+        lastName: newDoctor.lastName,
+        email: newDoctor.email,
+        password: newDoctor.password,
+        role: "doctor",
+      };
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:5000/api/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newDoctor),
+        body: JSON.stringify(doctorToAdd),
       });
+
       if (!response.ok) throw new Error("Error adding doctor");
+
       const data = await response.json();
       setDoctors((prev) => [...prev, data]);
+
       setNewDoctor({
-        name: "",
-        specialty: "",
+        firstName: "",
+        lastName: "",
         email: "",
         password: "",
-        phone: "",
-        clinic: "",
       });
       setShowAddDoctorModal(false);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to add doctor:", error);
+      alert("Failed to add doctor. Please try again.");
     }
   };
 
@@ -228,19 +239,19 @@ const ManageDoctors = () => {
               <input
                 type="text"
                 className="w-full p-2 border rounded-lg"
-                placeholder="Name"
-                value={newDoctor.name}
+                placeholder="First Name"
+                value={newDoctor.firstName}
                 onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, name: e.target.value })
+                  setNewDoctor({ ...newDoctor, firstName: e.target.value })
                 }
               />
               <input
                 type="text"
                 className="w-full p-2 border rounded-lg"
-                placeholder="Specialty"
-                value={newDoctor.specialty}
+                placeholder="Last Name"
+                value={newDoctor.lastName}
                 onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, specialty: e.target.value })
+                  setNewDoctor({ ...newDoctor, lastName: e.target.value })
                 }
               />
               <input
@@ -259,24 +270,6 @@ const ManageDoctors = () => {
                 value={newDoctor.password}
                 onChange={(e) =>
                   setNewDoctor({ ...newDoctor, password: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                className="w-full p-2 border rounded-lg"
-                placeholder="Phone"
-                value={newDoctor.phone}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, phone: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                className="w-full p-2 border rounded-lg"
-                placeholder="Clinic"
-                value={newDoctor.clinic}
-                onChange={(e) =>
-                  setNewDoctor({ ...newDoctor, clinic: e.target.value })
                 }
               />
               <div className="flex justify-end gap-3 mt-4">
