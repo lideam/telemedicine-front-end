@@ -1,65 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaBell, FaClock, FaCheckCircle, FaFlask, FaCommentDots, FaPills } from "react-icons/fa";
+import {
+  FaBell,
+  FaCheckCircle,
+  FaFlask,
+  FaCommentDots,
+  FaPills,
+} from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
 
-const notifications = [
-  {
-    id: 1,
-    type: "appointment",
-    icon: <FaBell className="text-blue-500" />,
-    message: "You have an appointment with Dr. Alice Morgan tomorrow at 10:00 AM.",
-    timestamp: "2 hours ago",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "message",
-    icon: <FaCommentDots className="text-green-500" />,
-    message: "Dr. John Doe sent you a message regarding your recent consultation.",
-    timestamp: "Yesterday",
-    read: true,
-  },
-  {
-    id: 3,
-    type: "test",
-    icon: <FaFlask className="text-purple-500" />,
-    message: "Your blood test results are now available.",
-    timestamp: "1 day ago",
-    read: false,
-  },
-  {
-    id: 4,
-    type: "prescription",
-    icon: <FaPills className="text-pink-500" />,
-    message: "Your prescription for Ibuprofen is about to expire.",
-    timestamp: "3 days ago",
-    read: true,
-  },
-];
-
 const Notifications = () => {
-  const [notifs, setNotifs] = useState(notifications);
-  const [filter, setFilter] = useState("all");
+  const [notifs, setNotifs] = useState([]);
 
-  const markAsRead = (id) => {
-    setNotifs(
-      notifs.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      )
-    );
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo"));
+        const token = localStorage.getItem("token");
+
+        if (!user || !token) {
+          console.error("User not logged in");
+          return;
+        }
+
+        const res = await fetch(
+          `http://localhost:5000/api/notification/user/${user._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch notifications");
+
+        const data = await res.json();
+
+        const enhanced = data.map((n) => ({
+          ...n,
+          icon: getIcon(n.type),
+          read: n.read || false,
+          timestamp: formatTimestamp(n.createdAt || n.updatedAt),
+        }));
+
+        setNotifs(enhanced);
+      } catch (err) {
+        console.error("Error loading notifications:", err);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const getIcon = (type) => {
+    switch (type) {
+      case "appointment":
+        return <FaBell className="text-blue-500" />;
+      case "message":
+        return <FaCommentDots className="text-green-500" />;
+      case "test":
+        return <FaFlask className="text-purple-500" />;
+      case "prescription":
+        return <FaPills className="text-pink-500" />;
+      case "system":
+        return <FaCheckCircle className="text-gray-500" />;
+      default:
+        return <FaBell className="text-gray-400" />;
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifs(notifs.map((n) => ({ ...n, read: true })));
+  const formatTimestamp = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
-
-  const clearAll = () => {
-    setNotifs([]);
-  };
-
-  const filtered =
-    filter === "unread" ? notifs.filter((n) => !n.read) : notifs;
 
   const unreadCount = notifs.filter((n) => !n.read).length;
 
@@ -71,67 +84,40 @@ const Notifications = () => {
           <FaBell className="text-blue-600 text-4xl" />
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Notifications</h1>
-            <p className="text-gray-600 mt-1">Stay updated with the latest information</p>
+            <p className="text-gray-600 mt-1">
+              Stay updated with the latest information
+            </p>
           </div>
         </section>
 
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex gap-2">
-              <button
-                onClick={markAllAsRead}
-                className="text-sm px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Mark All as Read
-              </button>
-              <button
-                onClick={clearAll}
-                className="text-sm px-4 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-              >
-                Clear All
-              </button>
-            </div>
-            <div>
-              <button
-                className={`text-sm px-3 py-1 rounded-full mr-2 ${filter === "all" ? "bg-blue-100 text-blue-600" : "bg-gray-200 text-gray-600"}`}
-                onClick={() => setFilter("all")}
-              >
-                All
-              </button>
-              <button
-                className={`text-sm px-3 py-1 rounded-full ${filter === "unread" ? "bg-blue-100 text-blue-600" : "bg-gray-200 text-gray-600"}`}
-                onClick={() => setFilter("unread")}
-              >
-                Unread
-              </button>
-            </div>
-          </div>
-
           <div className="space-y-4">
-            {filtered.length > 0 ? (
-              filtered.map((n) => (
+            {notifs.length > 0 ? (
+              notifs.map((n) => (
                 <motion.div
-                  key={n.id}
+                  key={n._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className={`flex items-start gap-4 p-4 rounded-lg shadow-sm border ${n.read ? "bg-gray-100" : "bg-white"}`}
+                  className={`flex items-start gap-4 p-4 rounded-lg shadow-sm border ${
+                    n.read ? "bg-gray-100" : "bg-white"
+                  }`}
                 >
-                  <div className="text-xl">
-                    {n.icon}
-                  </div>
+                  <div className="text-xl">{n.icon}</div>
                   <div className="flex-1">
-                    <p className={`text-sm ${n.read ? "text-gray-600" : "text-gray-800 font-medium"}`}>{n.message}</p>
-                    <span className="text-xs text-gray-500">{n.timestamp}</span>
-                  </div>
-                  {!n.read && (
-                    <button
-                      onClick={() => markAsRead(n.id)}
-                      className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    <p
+                      className={`text-sm ${
+                        n.read
+                          ? "text-gray-600"
+                          : "text-gray-800 font-medium"
+                      }`}
                     >
-                      Mark as Read
-                    </button>
-                  )}
+                      {n.message}
+                    </p>
+                    <span className="text-xs text-gray-500">
+                      {n.timestamp}
+                    </span>
+                  </div>
                 </motion.div>
               ))
             ) : (

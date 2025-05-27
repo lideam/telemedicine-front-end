@@ -39,6 +39,8 @@ import SystemSettings from "../pages/admin/SystemSettings";
 import AdminAccess from "../pages/admin/AdminAccess";
 import ForgotPassword from "../components/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
+import MessagePage from "../pages/patient/MessagePage";
+import DoctorMessagePage from "../pages/doctor/DoctorMessagePage";
 
 const AppRoutes = () => {
   return (
@@ -68,7 +70,7 @@ const AppRoutes = () => {
         <Route
           path="/forgot-password"
           element={
-            <ProtectedRoute allowedRoles={["patient","doctor"]}>
+            <ProtectedRoute allowedRoles={["patient", "doctor"]}>
               <ForgotPassword />
             </ProtectedRoute>
           }
@@ -94,6 +96,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={["patient"]}>
               <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/message/:id"
+          element={
+            <ProtectedRoute allowedRoles={["patient"]}>
+              <MessagePage />
             </ProtectedRoute>
           }
         />
@@ -171,6 +181,16 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/doctor/message/:id"
+          element={
+            <ProtectedRoute allowedRoles={["doctor"]}>
+              <DoctorMessagePage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/doctor/patients"
           element={

@@ -9,8 +9,6 @@ const AppointmentsPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [pendingAppointment, setPendingAppointment] = useState(null);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -152,79 +150,148 @@ const AppointmentsPage = () => {
     }
   };
 
+//   const sendNotification = async ({ title, message, userId }) => {
+//   try {
+//     const token = localStorage.getItem("token");
+
+//     const response = await fetch("http://localhost:5000/api/notification", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: token ? `Bearer ${token}` : undefined,
+//       },
+//       body: JSON.stringify({
+//         title,
+//         message,
+//         userId,
+//         type: "system",
+//       }),
+//     });
+
+//     const data = await response.json();
+
+//     if (!response.ok) throw new Error(data.message || "Notification failed.");
+
+//     console.log("Notification sent successfully.");
+//   } catch (error) {
+//     console.error("Failed to send notification:", error.message);
+//   }
+// };
+
   const handleRequestAppointment = () => {
-    if (!selectedDoctor || !selectedSlot) {
-      alert("Please select a doctor and a time slot.");
-      return;
-    }
+  if (!selectedDoctor || !selectedSlot) {
+    alert("Please select a doctor and a time slot.");
+    return;
+  }
 
+  const user = JSON.parse(localStorage.getItem("userInfo"));
+
+  const newAppointment = {
+    patientId: user._id,
+    doctorId: selectedDoctor._id,
+    title: "General Consultation",
+    sessionPrice: selectedDoctor.sessionPrice,
+    sessionDuration: selectedDoctor.sessionDuration,
+    sessionTime: selectedSlot.time, // ✅ this is the actual start time
+    appointmentDate: new Date(selectedSlot.date).toISOString(),
+    appointmentTime: selectedSlot.time,
+    appointmentStatus: "pending",
+  };
+
+  fetch("http://localhost:5000/api/appointment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(newAppointment),
+  })
+    .then((res) => res.json())
+    .then(async (data) => {
+      setAppointments([...appointments, data]);
+      setSelectedDoctor(null);
+      setSelectedSlot(null);
+      alert("Appointment requested! Awaiting doctor confirmation.");
+
+      // Send notification after successful appointment request
+      try {
+        const notificationPayload = {
+          title: "Appointment Requested",
+          message: "You have requested a new appointment. Waiting for confirmation.",
+          userId: user._id,
+          type: "system",
+        };
+
+        const notifResponse = await fetch("http://localhost:5000/api/notification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(notificationPayload),
+        });
+
+        const notifData = await notifResponse.json();
+
+        if (!notifResponse.ok) {
+          throw new Error(notifData.message || "Notification failed.");
+        }
+
+        console.log("Appointment request notification sent successfully.");
+      } catch (error) {
+        console.error("Failed to send notification:", error.message);
+      }
+    })
+    .catch((error) => {
+      console.error("Error requesting appointment:", error);
+      alert("Error requesting appointment.");
+    });
+};
+
+ const handlePaymentNow = async (appointment) => {
+  try {
     const user = JSON.parse(localStorage.getItem("userInfo"));
+    const transactionId = `txn_${Date.now()}`;
 
-    const newAppointment = {
-      patientId: user._id,
-      doctorId: selectedDoctor._id,
-      title: "General Consultation",
-      sessionPrice: selectedDoctor.sessionPrice,
-      sessionDuration: selectedDoctor.sessionDuration,
-      sessionTime: selectedSlot.time, // ✅ this is the actual start time
-      appointmentDate: new Date(selectedSlot.date).toISOString(),
-      appointmentTime: selectedSlot.time,
-      appointmentStatus: "pending",
-    };
+    localStorage.setItem("chapaTxnId", transactionId); // Store it
 
-    fetch("http://localhost:5000/api/appointment", {
-      // your backend endpoint is /api/appointment
+    const response = await fetch("http://localhost:5000/api/payment/initiate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // include token if required
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify(newAppointment),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setAppointments([...appointments, data]);
-        setSelectedDoctor(null);
-        setSelectedSlot(null);
-        alert("Appointment requested! Awaiting doctor confirmation.");
-      })
-      .catch((error) => {
-        console.error("Error requesting appointment:", error);
-        alert("Error requesting appointment.");
-      });
-  };
+      body: JSON.stringify({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone || "0910000000",
+        appointmentId: appointment._id,
+        price: appointment.sessionPrice,
+        paymentType: "chapa",
+        transactionId: transactionId,
+      }),
+    });
 
-  const handlePaymentNow = (appointment) => {
-    setPendingAppointment(appointment);
-    setShowPaymentModal(true);
-  };
+    const data = await response.json();
 
-  const handlePayment = () => {
-    fetch(
-      `http://localhost:5000/api/appointments/${pendingAppointment._id}/pay`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((updatedAppt) => {
-        setAppointments(
-          appointments.map((appt) =>
-            appt._id === updatedAppt._id ? updatedAppt : appt
-          )
-        );
-        setShowPaymentModal(false);
-        setPendingAppointment(null);
-        alert("Payment successful!");
-      })
-      .catch((error) => {
-        console.error("Payment failed:", error);
-        alert("Payment failed.");
-      });
-  };
+    if (data.status === "success" && data.data.checkout_url) {
+      window.location.href = data.data.checkout_url;
+       sendNotification({
+      title: "Payment Successful",
+      message: "Your payment has been received. Thank you!",
+      userId: user._id,
+    });
+    } else {
+      alert("Failed to initiate payment. Please try again.");
+      console.error("Payment Error:", data.message);
+    }
+  } catch (err) {
+    console.error("Payment initiation failed:", err);
+    alert("Payment could not be started. Please try again.");
+  }
+};
+
 
   const handleReschedule = (appointmentId) => {
     const appointment = appointments.find((a) => a._id === appointmentId);
@@ -237,12 +304,61 @@ const AppointmentsPage = () => {
       );
       setSelectedSlot({ date: appointment.date, time: appointment.time });
       alert("Please choose a new time slot and request again.");
+       sendNotification({
+      title: "Appointment Declined",
+      message: "Your appointment has been declined by the doctor.",
+      userId: user._id,
+    });
     }
   };
 
   const handleGoToChat = () => {
     navigate("/patient-chats");
   };
+
+  const checkPaymentStatus = async (appointmentId) => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/payment/check-status/appointment/${appointmentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error("Failed to check payment status");
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appt) =>
+          appt._id === appointmentId
+            ? { ...appt, paymentStatus: "Paid" }
+            : appt
+        )
+      );
+       sendNotification({
+      title: "Payment Successful",
+      message: "Your payment has been received. Thank you!",
+      userId: user._id,
+    });
+    }
+  } catch (err) {
+    console.error("Error checking payment status:", err);
+  }
+};
+useEffect(() => {
+  const interval = setInterval(() => {
+    appointments
+      .filter((appt) => appt.paymentStatus === "Pending")
+      .forEach((appt) => checkPaymentStatus(appt._id));
+  }, 3500); // check every 3.5 seconds
+
+  return () => clearInterval(interval); // cleanup on unmount
+}, [appointments]);
+
 
   return (
     <div className="flex min-h-screen bg-gray-50 relative">
@@ -401,27 +517,40 @@ const AppointmentsPage = () => {
                   <strong>Status:</strong>{" "}
                   {appointment.appointmentStatus || "N/A"}
                 </p>
-                <p
-                  className={`font-semibold ${
-                    appointment.paymentStatus === "Paid"
-                      ? "text-green-600"
-                      : "text-yellow-600"
-                  }`}
-                >
-                  <strong>Payment:</strong>{" "}
-                  {appointment.paymentStatus || "Pending"}
-                </p>
+                {appointment.appointmentStatus === "Declined" ? (
+  <button
+    onClick={() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      handleReschedule(appointment._id);
+    }}
+    className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+  >
+    Reschedule
+  </button>
+) : (
+  <p
+    className={`font-semibold ${
+      appointment.paymentStatus === "Paid"
+        ? "text-green-600"
+        : "text-yellow-600"
+    }`}
+  >
+    <strong>Payment:</strong> {appointment.paymentStatus || "Pending"}
+  </p>
+)}
+
 
                 {/* Pay Now */}
-                {appointment.status === "Confirmed" &&
-                  appointment.paymentStatus === "Pending" && (
-                    <button
-                      onClick={() => handlePaymentNow(appointment)}
-                      className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      Pay Now
-                    </button>
-                  )}
+                {appointment.appointmentStatus === "Confirmed" &&
+  appointment.paymentStatus === "Pending" && (
+    <button
+      onClick={() => handlePaymentNow(appointment)}
+      className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+    >
+      Pay Now
+    </button>
+)}
+
 
                 {/* Chat Access */}
                 {appointment.status === "Confirmed" &&
@@ -449,45 +578,7 @@ const AppointmentsPage = () => {
           )}
         </div>
 
-        {/* Payment Modal */}
-        {showPaymentModal && pendingAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start pt-24 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Payment Confirmation
-              </h2>
-              <div className="text-gray-700 mb-4">
-                <p>
-                  <strong>Doctor:</strong> {pendingAppointment.doctorName}
-                </p>
-                <p>
-                  <strong>Date:</strong> {pendingAppointment.date}
-                </p>
-                <p>
-                  <strong>Time:</strong> {pendingAppointment.time}
-                </p>
-                <p>
-                  <strong>Amount:</strong> {pendingAppointment.amount} ETB
-                </p>
-              </div>
-              <button
-                onClick={handlePayment}
-                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-              >
-                Pay with Chapa
-              </button>
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  setPendingAppointment(null);
-                }}
-                className="w-full mt-3 text-red-500 text-sm underline"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+       
       </main>
     </div>
   );

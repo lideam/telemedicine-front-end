@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaReceipt,
   FaCheckCircle,
@@ -8,65 +8,140 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
-// import { useHistory } from 'react-router-dom'; // for page redirection
 
 const TransactionHistoryPage = () => {
-  const [transactions] = useState([
-    {
-      id: 1,
-      date: "April 10, 2025",
-      doctorName: "Dr. John Doe",
-      appointmentDate: "April 10, 2025, 10:30 AM",
-      amountPaid: 1500, // Amount in Birr
-      status: "Paid",
-      receipt: "receipt_1.pdf", // Dummy filename for the receipt
-      paymentMethod: "Chapa",
-    },
-    {
-      id: 2,
-      date: "March 15, 2025",
-      doctorName: "Dr. Jane Smith",
-      appointmentDate: "March 15, 2025, 2:00 PM",
-      amountPaid: 1200, // Amount in Birr
-      status: "Refund/Reschedule",
-      receipt: "receipt_2.pdf", // Dummy filename for the receipt
-      paymentMethod: "Credit Card",
-    },
-    {
-      id: 3,
-      date: "February 20, 2025",
-      doctorName: "Dr. Emily White",
-      appointmentDate: "February 20, 2025, 9:00 AM",
-      amountPaid: 1800, // Amount in Birr
-      status: "Paid",
-      receipt: "receipt_3.pdf", // Dummy filename for the receipt
-      paymentMethod: "Chapa",
-    },
-  ]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  //   const history = useHistory(); // For redirecting to the appointments page
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewedTransaction, setViewedTransaction] = useState(null);
 
-  const handleDownloadReceipt = (receiptFileName) => {
-    // Logic to download the receipt (this is a placeholder for actual functionality)
-    alert(`Downloading receipt: ${receiptFileName}`);
+  const API_BASE_URL = "http://localhost:5000";
+  const user = JSON.parse(localStorage.getItem("userInfo"));
+  const userId = user?._id;
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/payment/check-status/user/${userId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setTransactions(data.reverse()); // newest at bottom
+        }
+      } catch (err) {
+        console.error("Failed to fetch transactions:", err);
+      }
+    };
+
+    fetchTransactions();
+  }, [userId, token]);
+
+ const handleDownloadReceipt = async (transaction) => {
+  // 1. Generate and download the receipt
+  const receiptContent = `
+    Medical Appointment Receipt
+    ---------------------------
+    Appointment ID: ${transaction.appointmentId}
+    Transaction ID: ${transaction.transactionId}
+    Status: ${transaction.status}
+    Amount Paid: ${transaction.price} Birr
+    Payment Method: ${transaction.paymentType}
+    Date: ${new Date(transaction.updatedAt || transaction.createdAt || Date.now()).toLocaleString()}
+  `;
+
+  const blob = new Blob([receiptContent], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `receipt_${transaction.transactionId}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // 2. Send notification to backend
+  try {
+    const user = JSON.parse(localStorage.getItem("userInfo"));
+    const token = localStorage.getItem("token");
+
+    const notificationPayload = {
+      title: "Receipt Downloaded",
+      message: `You downloaded the receipt for appointment ${transaction.appointmentId}`,
+      userId: user._id,
+      type: "system",
+    };
+
+    const response = await fetch("http://localhost:5000/api/notification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // optional if backend requires
+      },
+      body: JSON.stringify(notificationPayload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Notification failed.");
+    }
+
+    console.log("Notification sent successfully.");
+  } catch (error) {
+    console.error("Failed to send notification:", error.message);
+  }
+};
+
+
+
+  const handleViewAppointment = (transaction) => {
+    setViewedTransaction(transaction);
+    setViewModalOpen(true);
   };
 
-  const handleReschedule = (transactionId) => {
-    // Redirect to the appointments page when reschedule is clicked
-    history.push(`/appointments/${transactionId}`);
-  };
+  const handlePaymentNow = async (transaction) => {
+    try {
+      const transactionId = `txn_${Date.now()}`;
+      localStorage.setItem("chapaTxnId", transactionId);
 
-  const handleRefund = (transaction) => {
-    // Show refund modal with payment details
-    setSelectedTransaction(transaction);
-    setIsModalOpen(true);
-  };
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone || "0910000000",
+          appointmentId: transaction.appointmentId,
+          price: transaction.price,
+          paymentType: "chapa",
+          transactionId,
+        }),
+      });
 
-  const handleRefundSubmit = () => {
-    // Logic for refund submission (this can be API interaction in real life)
-    alert("Refund has been processed!");
-    setIsModalOpen(false); // Close the modal after refund
+      const data = await response.json();
+
+      if (data.status === "success" && data.data.checkout_url) {
+        window.location.href = data.data.checkout_url;
+      } else {
+        alert("Payment initiation failed.");
+      }
+    } catch (err) {
+      console.error("Error initiating payment:", err);
+      alert("Could not start payment.");
+    }
   };
 
   return (
@@ -84,118 +159,98 @@ const TransactionHistoryPage = () => {
             </p>
           </div>
         </section>
+
         <div className="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-xl">
-          {/* Transaction List */}
-          <div className="space-y-4">
-            {transactions.length === 0 ? (
-              <div className="text-center text-gray-500">
-                <p>No transactions found.</p>
-              </div>
-            ) : (
-              transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex flex-col md:flex-row items-center justify-between p-6 border-b border-gray-200 rounded-lg shadow-md"
-                >
-                  <div className="flex flex-col md:flex-row items-start md:items-center md:space-x-4">
-                    <FaReceipt className="text-xl text-blue-600 mb-2 md:mb-0" />
-                    <div>
-                      <p className="text-lg font-semibold">
-                        {transaction.doctorName}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Appointment Date: {transaction.appointmentDate}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Transaction Date: {transaction.date}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-right mt-4 md:mt-0">
+          {transactions.length === 0 ? (
+            <div className="text-center text-gray-500">
+              <p>No transactions found.</p>
+            </div>
+          ) : (
+            transactions.map((transaction, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col md:flex-row items-center justify-between p-6 border-b border-gray-200 rounded-lg shadow-md"
+              >
+                <div className="flex flex-col md:flex-row items-start md:items-center md:space-x-4">
+                  <FaReceipt className="text-xl text-blue-600 mb-2 md:mb-0" />
+                  <div>
                     <p className="text-lg font-semibold">
-                      {transaction.amountPaid} Birr
+                      Appointment ID: {transaction.appointmentId}
                     </p>
-                    <p
-                      className={`text-sm font-medium mt-2 ${
-                        transaction.status === "Paid"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {transaction.status === "Paid" ? (
-                        <>
-                          <FaCheckCircle className="inline mr-1" />
-                          Paid
-                        </>
-                      ) : (
-                        <>
-                          <FaUndoAlt className="inline mr-1" />
-                          <span className="text-blue-600 cursor-pointer">
-                            <Link
-                              to="/appointments"
-                              className="hover:underline"
-                            >
-                              Reschedule
-                            </Link>
-                          </span>
-                          <span className="mx-2">|</span>
-                          <span
-                            onClick={() => handleRefund(transaction)}
-                            className="text-red-600 cursor-pointer"
-                          >
-                            Refund
-                          </span>
-                        </>
-                      )}
+                    <p className="text-sm text-gray-600">
+                      Transaction ID: {transaction.transactionId}
                     </p>
-
-                    {/* Download Receipt Button */}
-                    <div className="mt-4">
-                      <button
-                        onClick={() =>
-                          handleDownloadReceipt(transaction.receipt)
-                        }
-                        className="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold flex items-center justify-center hover:bg-blue-700 transition"
-                      >
-                        <FaDownload className="mr-2" />
-                        Download Receipt
-                      </button>
-                    </div>
+                    <p className="text-sm text-gray-600">
+                      Status: {transaction.status}
+                    </p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+
+                <div className="text-right mt-4 md:mt-0 space-y-2">
+                  <p className="text-lg font-semibold">
+                    {transaction.price} Birr
+                  </p>
+                  <p
+                    className={`text-sm font-medium ${
+                      transaction.status === "success"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {transaction.status === "success" ? "Paid" : "Unpaid"}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    {transaction.status === "success" ? (
+                      <button
+                        onClick={() =>
+                          handleDownloadReceipt(transaction)
+                        }
+                        className="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
+                      >
+                        <FaDownload className="inline mr-2" />
+                        Download Receipt
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handlePaymentNow(transaction)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 transition"
+                      >
+                        Pay Now
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleViewAppointment(transaction)}
+                      className="bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-semibold hover:bg-gray-300 transition"
+                    >
+                      View Appointment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Refund Modal */}
-        {isModalOpen && selectedTransaction && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h2 className="text-2xl font-semibold mb-4">
-                Refund Information
+        {/* View Appointment Modal */}
+        {viewModalOpen && viewedTransaction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                Appointment Details
               </h2>
-              <p className="text-lg mb-2">
-                <strong>Payment Method:</strong>{" "}
-                {selectedTransaction.paymentMethod}
-              </p>
-              <p className="text-lg mb-4">
-                <strong>Amount Paid:</strong> {selectedTransaction.amountPaid}{" "}
-                Birr
-              </p>
-              <div className="flex justify-between">
+              <p><strong>Appointment ID:</strong> {viewedTransaction.appointmentId}</p>
+              <p><strong>Transaction ID:</strong> {viewedTransaction.transactionId}</p>
+              <p><strong>Status:</strong> {viewedTransaction.status}</p>
+              <p><strong>Amount:</strong> {viewedTransaction.price} Birr</p>
+              <p><strong>Payment Method:</strong> {viewedTransaction.paymentType}</p>
+
+              <div className="flex justify-end pt-4">
                 <button
-                  onClick={handleRefundSubmit}
-                  className="bg-red-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-red-700 transition"
-                >
-                  Refund
-                </button>
-                <button
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => setViewModalOpen(false)}
                   className="bg-gray-300 text-gray-800 px-6 py-2 rounded-xl font-semibold hover:bg-gray-400 transition"
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
             </div>

@@ -62,7 +62,7 @@ const PatientAuth = () => {
       }
 
       localStorage.setItem("userInfo", JSON.stringify(data.user));
-      localStorage.setItem("token", data.token); // Optional: store token if needed
+      localStorage.setItem("token", data.token);
 
       localStorage.setItem("role", "patient");
 
