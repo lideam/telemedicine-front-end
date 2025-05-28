@@ -8,6 +8,7 @@ const MessagePage = () => {
   const messagesEndRef = useRef(null);
 
   const [doctorName, setDoctorName] = useState("");
+  const [appointmentId, setAppointmentId] = useState("");
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState(null);
@@ -27,6 +28,7 @@ const MessagePage = () => {
         if (!chatRes.ok) throw new Error("Failed to fetch chat");
 
         const chat = await chatRes.json();
+        setAppointmentId(chat.appointmentId);
 
         const doctorRes = await fetch(
           `http://127.0.0.1:5000/api/user/${chat.doctorId}`,
@@ -60,7 +62,7 @@ const MessagePage = () => {
         const data = await res.json();
 
         const formattedMessages = data.map((msg) => ({
-          sender: msg.senderId === currentUserId ? "self" : "other",
+          sender: msg.senderId === currentUserId ? "Me" : doctorName,
           text: msg.messageType === "text" ? msg.content : "",
           messageType: msg.messageType,
           content: msg.content,
@@ -78,7 +80,7 @@ const MessagePage = () => {
     };
 
     fetchMessages();
-  }, [chatId, token, currentUserId]);
+  }, [chatId, token, currentUserId, doctorName]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() && !file) return;
@@ -140,7 +142,7 @@ const MessagePage = () => {
       setMessages((prev) => [
         ...prev,
         {
-          sender: "self",
+          sender: "Me",
           text: messageType === "text" ? newMessage : "",
           messageType,
           content: fileUrl || newMessage,
@@ -159,6 +161,32 @@ const MessagePage = () => {
     }
   };
 
+  const handleStartVideoCall = async () => {
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/api/videoCall/appointment/${appointmentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to start video call");
+      }
+
+      const data = await res.json();
+      const callUrl = data.callUrl;
+
+      window.open(callUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Video call error:", err);
+      alert("Could not start the video call. Please try again.");
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -167,25 +195,27 @@ const MessagePage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <PatientNav />
       <main className="flex-1 p-6 pt-6 ml-64 flex flex-col">
-        <div className="text-2xl font-semibold text-gray-800 mb-4">
+        <div className="text-2xl font-semibold text-gray-800 mb-2">
           {doctorName || "Loading doctor..."}
         </div>
 
+        {appointmentId && (
+          <button
+            onClick={handleStartVideoCall}
+            className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 w-fit"
+          >
+            Start Video Call
+          </button>
+        )}
+
         <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-white rounded-xl shadow-inner border">
           {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${
-                msg.sender === "self" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-xs rounded-2xl p-3 text-sm ${
-                  msg.sender === "self"
-                    ? "bg-blue-100 text-right text-gray-800"
-                    : "bg-gray-200 text-left text-gray-800"
-                }`}
-              >
+            <div key={idx} className="flex justify-start">
+              <div className="max-w-xs bg-gray-200 rounded-2xl p-3 text-lg text-gray-800">
+                <div className="font-semibold text-xs text-gray-500 mb-1">
+                  {msg.sender}
+                </div>
+
                 {msg.messageType === "text" && <div>{msg.text}</div>}
 
                 {msg.messageType === "image" && (
@@ -213,10 +243,13 @@ const MessagePage = () => {
                   </div>
                 )}
 
-                <div className="text-xs text-gray-500 mt-1">{msg.time}</div>
+                <div className="text-xs text-gray-500 mt-1 text-right">
+                  {msg.time}
+                </div>
               </div>
             </div>
           ))}
+
           <div ref={messagesEndRef} />
         </div>
 

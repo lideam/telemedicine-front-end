@@ -9,11 +9,9 @@ const DoctorProfilePage = () => {
     bio: "",
     yearsOfExperience: 0,
     clinicName: "",
-    clinicLocation: "",
-    phone: "",
     email: "",
-    _id: "", // Doctor ID
-    medicalProfileId: "", // Medical Profile ID
+    _id: "",
+    medicalProfileId: "",
   });
 
   const [profilePic, setProfilePic] = useState(null);
@@ -24,7 +22,6 @@ const DoctorProfilePage = () => {
       try {
         const token = localStorage.getItem("token");
 
-        // Step 1: Get the logged-in doctor's basic auth info
         const authRes = await fetch("http://localhost:5000/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -37,7 +34,6 @@ const DoctorProfilePage = () => {
         const doctorId = authData._id;
         const fullName = `${authData.firstName} ${authData.lastName}`;
 
-        // Step 2: Get the medical profile using the doctor ID
         const profileRes = await fetch(
           `http://localhost:5000/api/medicalProfile/user/${doctorId}`,
           {
@@ -49,20 +45,14 @@ const DoctorProfilePage = () => {
 
         let profileData = {};
         if (profileRes.ok) {
-          const data = await profileRes.json();
-          if (Array.isArray(data) && data.length > 0) {
-            profileData = data[0];
-          }
+          profileData = await profileRes.json();
         }
 
-        // Step 3: Merge data and update UI
         setDoctorInfo({
           name: fullName,
           email: authData.email || "",
-          phone: "", // could be added from another source
           bio: "",
           clinicName: profileData.currentHospital || "",
-          clinicLocation: "",
           specialty: profileData.specialty || "",
           yearsOfExperience: profileData.yearsOfExperience || "",
           _id: doctorId,
@@ -119,7 +109,6 @@ const DoctorProfilePage = () => {
       alert("Profile saved successfully!");
       setIsEditing(false);
 
-      // Update medicalProfileId if just created
       if (!doctorInfo.medicalProfileId && data._id) {
         setDoctorInfo((prev) => ({
           ...prev,
@@ -181,7 +170,6 @@ const DoctorProfilePage = () => {
               </h2>
               <p className="text-gray-500">{doctorInfo.specialty}</p>
               <p className="text-gray-500">{doctorInfo.email}</p>
-              <p className="text-gray-500">{doctorInfo.phone}</p>
             </div>
           </div>
 
@@ -196,18 +184,9 @@ const DoctorProfilePage = () => {
                 ["Specialty", "specialty", "text"],
                 ["Years of Experience", "yearsOfExperience", "number"],
                 ["Email", "email", "email"],
-                ["Phone", "phone", "text"],
                 ["Clinic Name", "clinicName", "text"],
-                ["Clinic Location", "clinicLocation", "text"],
               ].map(([label, key, type]) => (
-                <div
-                  key={key}
-                  className={
-                    key === "clinicLocation" || key === "clinicName"
-                      ? "col-span-2"
-                      : ""
-                  }
-                >
+                <div key={key}>
                   <label className="block text-gray-600">{label}</label>
                   <input
                     type={type}

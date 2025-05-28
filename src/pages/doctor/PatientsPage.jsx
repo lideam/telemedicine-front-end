@@ -1,67 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DoctorNav from "../../components/layout/DoctorNav";
 import { Dialog } from "@headlessui/react";
-import { MessageSquareText, FileText } from "lucide-react";
 import { FaUsers } from "react-icons/fa";
 
-const patients = [
-  {
-    id: 1,
-    name: "Jane Doe",
-    gender: "Female",
-    age: 29,
-    photo: "https://randomuser.me/api/portraits/women/44.jpg",
-    lastAppointment: "Apr 10, 2025",
-    condition: "Flu symptoms",
-    email: "jane.doe@example.com",
-    phone: "+251912345678",
-    address: "Addis Ababa, Ethiopia",
-  },
-  {
-    id: 2,
-    name: "Michael Smith",
-    gender: "Male",
-    age: 35,
-    photo: "https://randomuser.me/api/portraits/men/32.jpg",
-    lastAppointment: "Apr 1, 2025",
-    condition: "Chest pain",
-    email: "michael.smith@example.com",
-    phone: "+251911234567",
-    address: "Bahir Dar, Ethiopia",
-  },
-  {
-    id: 3,
-    name: "Sarah Johnson",
-    gender: "Female",
-    age: 41,
-    photo: "https://randomuser.me/api/portraits/women/68.jpg",
-    lastAppointment: "Mar 25, 2025",
-    condition: "Blood pressure check",
-    email: "sarah.johnson@example.com",
-    phone: "+251910123456",
-    address: "Gondar, Ethiopia",
-  },
-];
-
 const PatientsPage = () => {
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [patientsMap, setPatientsMap] = useState({}); // id -> full name
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [genderFilter, setGenderFilter] = useState("All");
-  const navigate = useNavigate();
 
-  const openPatientDetails = (patient) => {
-    setSelectedPatient(patient);
+  const navigate = useNavigate();
+  const doctorId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
+
+  // Fetch appointments
+  useEffect(() => {
+    if (!doctorId || !token) return;
+
+    const fetchAppointments = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/appointment/doctor/${doctorId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch appointments");
+
+        const data = await res.json();
+        setAppointments(data);
+
+        // Extract unique patient IDs
+        const patientIds = [...new Set(data.map((appt) => appt.patientId))];
+
+        // Fetch all patient details
+        const fetchedMap = {};
+        await Promise.all(
+          patientIds.map(async (id) => {
+            try {
+              const userRes = await fetch(`http://localhost:5000/api/user/${id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (userRes.ok) {
+                const user = await userRes.json();
+                fetchedMap[id] = `${user.firstName} ${user.lastName}`;
+              } else {
+                fetchedMap[id] = "Unknown";
+              }
+            } catch {
+              fetchedMap[id] = "Unknown";
+            }
+          })
+        );
+
+        setPatientsMap(fetchedMap);
+      } catch (error) {
+        console.error("Error fetching appointments or patients:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, [doctorId, token]);
+
+  const openDetails = (appt) => {
+    setSelectedAppointment(appt);
     setOpenModal(true);
   };
 
   const closeModal = () => setOpenModal(false);
 
-  const filteredPatients = patients.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchGender = genderFilter === "All" || p.gender === genderFilter;
-    return matchSearch && matchGender;
+  const filteredAppointments = appointments.filter((appt) => {
+    const fullName = patientsMap[appt.patientId] || "Unknown";
+    return fullName.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
@@ -71,74 +86,53 @@ const PatientsPage = () => {
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         {/* Header */}
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Left: Icon + Title */}
           <div className="flex items-center gap-4">
             <FaUsers className="text-blue-600 text-3xl" />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Patients</h1>
-              <p className="text-gray-600 mt-1">
-                Manage and explore your patients
-              </p>
+              <p className="text-gray-600 mt-1">Manage and explore your patients</p>
             </div>
           </div>
 
-          {/* Right: Search & Filter */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
             <input
               type="text"
-              placeholder="Search by name..."
+              placeholder="Search by patient name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-60"
             />
-            <select
-              value={genderFilter}
-              onChange={(e) => setGenderFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-auto"
-            >
-              <option value="All">All Genders</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
           </div>
         </section>
 
-        {/* Patient Table */}
+        {/* Table */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-600">
               <thead>
                 <tr className="text-gray-500 border-b">
-                  <th className="py-3 px-4">Photo</th>
-                  <th className="py-3 px-4">Name</th>
-                  <th className="py-3 px-4">Gender</th>
-                  <th className="py-3 px-4">Age</th>
-                  <th className="py-3 px-4">Last Appointment</th>
-                  <th className="py-3 px-4">Condition</th>
+                  <th className="py-3 px-4">Patient Name</th>
+                  <th className="py-3 px-4">Session Duration (min)</th>
+                  <th className="py-3 px-4">Appointment Date</th>
+                  <th className="py-3 px-4">Appointment Time</th>
                   <th className="py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredPatients.length > 0 ? (
-                  filteredPatients.map((patient) => (
-                    <tr key={patient.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <img
-                          src={patient.photo}
-                          alt={patient.name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      </td>
+                {filteredAppointments.length > 0 ? (
+                  filteredAppointments.map((appt) => (
+                    <tr key={appt._id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium text-gray-800">
-                        {patient.name}
+                        {patientsMap[appt.patientId] || "Unknown"}
                       </td>
-                      <td className="py-3 px-4">{patient.gender}</td>
-                      <td className="py-3 px-4">{patient.age}</td>
-                      <td className="py-3 px-4">{patient.lastAppointment}</td>
-                      <td className="py-3 px-4">{patient.condition}</td>
+                      <td className="py-3 px-4">{appt.sessionDuration}</td>
+                      <td className="py-3 px-4">
+                        {new Date(appt.appointmentDate).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4">{appt.appointmentTime}</td>
                       <td className="py-3 px-4">
                         <button
-                          onClick={() => openPatientDetails(patient)}
+                          onClick={() => openDetails(appt)}
                           className="text-blue-600 hover:underline"
                         >
                           View Details
@@ -148,7 +142,7 @@ const PatientsPage = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-gray-500">
+                    <td colSpan={5} className="text-center py-6 text-gray-500">
                       No patients found.
                     </td>
                   </tr>
@@ -159,7 +153,7 @@ const PatientsPage = () => {
         </div>
       </main>
 
-      {/* Patient Details Modal */}
+      {/* Modal */}
       <Dialog
         open={openModal}
         onClose={closeModal}
@@ -167,63 +161,59 @@ const PatientsPage = () => {
       >
         <div className="absolute inset-0 backdrop-blur-sm bg-black/10" />
         <Dialog.Panel className="relative bg-white p-6 rounded-xl w-full max-w-md z-10 shadow-2xl">
-          {selectedPatient && (
+          {selectedAppointment && (
             <>
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={selectedPatient.photo}
-                  alt={selectedPatient.name}
-                  className="h-16 w-16 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {selectedPatient.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {selectedPatient.gender}, {selectedPatient.age} years
-                  </p>
-                </div>
-              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
+                Appointment Details
+              </h3>
               <div className="space-y-2 text-gray-700 text-sm">
                 <p>
-                  <strong>Email:</strong> {selectedPatient.email}
+                  <strong>Appointment ID:</strong> {selectedAppointment._id}
                 </p>
                 <p>
-                  <strong>Phone:</strong> {selectedPatient.phone}
+                  <strong>Patient:</strong>{" "}
+                  {patientsMap[selectedAppointment.patientId] || "Unknown"}
                 </p>
                 <p>
-                  <strong>Address:</strong> {selectedPatient.address}
+                  <strong>Doctor ID:</strong> {selectedAppointment.doctorId}
                 </p>
                 <p>
-                  <strong>Last Appointment:</strong>{" "}
-                  {selectedPatient.lastAppointment}
+                  <strong>Title:</strong> {selectedAppointment.title}
                 </p>
                 <p>
-                  <strong>Condition:</strong> {selectedPatient.condition}
+                  <strong>Session Price:</strong> ${selectedAppointment.sessionPrice}
+                </p>
+                <p>
+                  <strong>Session Duration:</strong>{" "}
+                  {selectedAppointment.sessionDuration} minutes
+                </p>
+                <p>
+                  <strong>Appointment Date:</strong>{" "}
+                  {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}
+                </p>
+                <p>
+                  <strong>Appointment Time:</strong>{" "}
+                  {selectedAppointment.appointmentTime}
+                </p>
+                <p>
+                  <strong>Status:</strong> {selectedAppointment.appointmentStatus}
+                </p>
+                <p>
+                  <strong>Created At:</strong>{" "}
+                  {new Date(selectedAppointment.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Updated At:</strong>{" "}
+                  {new Date(selectedAppointment.updatedAt).toLocaleString()}
                 </p>
               </div>
+
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm"
                   onClick={closeModal}
                 >
                   Close
-                </button>
-                <button
-                  onClick={() =>
-                    navigate(`/doctor/history/${selectedPatient.id}`)
-                  }
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                >
-                  <FileText size={16} />
-                  History
-                </button>
-                <button
-                  onClick={() => navigate(`/doctor/chat/${selectedPatient.id}`)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                >
-                  <MessageSquareText size={16} />
-                  Chat
                 </button>
               </div>
             </>

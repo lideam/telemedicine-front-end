@@ -1,159 +1,129 @@
-import { useState } from "react";
-import { FaCamera, FaSave, FaEdit, FaUser } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaSave, FaEdit, FaUser } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
 
-
 const ProfilePage = () => {
-  const [personalInfo, setPersonalInfo] = useState({
-    name: "John Doe",
-    dob: "1990-05-14",
-    gender: "Male",
-    email: "johndoe@example.com",
-    phone: "+1 234 567 890",
-    address: "123 Main St, City, State, 12345",
+  const [patientInfo, setPatientInfo] = useState({
+    name: "",
+    email: "",
+    _id: "",
   });
 
-  const [healthInfo] = useState({
-    medicalHistory: "Asthma, Hypertension",
-    currentMedications: "Albuterol, Lisinopril",
-    allergies: "Peanuts, Pollen",
-    familyHistory: "Diabetes, Heart Disease",
-    vaccinations: "Flu, COVID-19",
-  });
-
-  const [profilePic, setProfilePic] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleProfilePicChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setProfilePic(URL.createObjectURL(file));
-    }
-  };
+  useEffect(() => {
+    const fetchPatientInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const handleInputChange = (e, section, field) => {
+        if (!res.ok) throw new Error("Failed to fetch patient info");
+
+        const data = await res.json();
+        const fullName = `${data.firstName} ${data.lastName}`;
+
+        setPatientInfo({
+          name: fullName,
+          email: data.email,
+          _id: data._id,
+        });
+      } catch (error) {
+        console.error("Error fetching patient profile:", error);
+      }
+    };
+
+    fetchPatientInfo();
+  }, []);
+
+  const handleInputChange = (e, field) => {
     const value = e.target.value;
-    if (section === "personal") {
-      setPersonalInfo({ ...personalInfo, [field]: value });
+    setPatientInfo({ ...patientInfo, [field]: value });
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const [firstName, ...rest] = patientInfo.name.split(" ");
+      const lastName = rest.join(" ") || "";
+
+      const payload = { firstName, lastName, email: patientInfo.email };
+
+      const res = await fetch(
+        `http://localhost:5000/api/user/${patientInfo._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update profile");
+
+      alert("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      alert("Failed to save changes.");
     }
   };
 
-  const handleSaveChanges = () => {
-    setIsEditing(false);
-    alert("Changes saved successfully!");
-  };
-
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
+  const handleEditClick = () => setIsEditing(true);
+  const handleCancelEdit = () => setIsEditing(false);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <PatientNav />
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
-      <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg  items-center flex gap-5">
+        <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-4">
           <FaUser className="text-blue-600 text-4xl" />
-          <div><h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            View and manage your personal and health information
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              View and manage your basic information
+            </p>
           </div>
         </section>
 
-        <div className="max-w-6xl mx-auto px-6 space-y-10 pb-20">
-          {/* Profile Picture */}
-          <div className="flex items-center space-x-6">
-            <div className="relative">
-              <img
-                src={profilePic || "https://via.placeholder.com/150"}
-                alt="Profile"
-                className="w-32 h-32 rounded-full object-cover border-4 border-blue-600 shadow-md"
-              />
-              <label
-                htmlFor="profile-pic"
-                className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer shadow"
-              >
-                <FaCamera />
-              </label>
-              <input
-                type="file"
-                id="profile-pic"
-                className="hidden"
-                accept="image/*"
-                onChange={handleProfilePicChange}
-              />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-800">
-                {personalInfo.name}
-              </h2>
-              <p className="text-gray-500">{personalInfo.email}</p>
-              <p className="text-gray-500">{personalInfo.phone}</p>
-            </div>
-          </div>
-
-          {/* Personal Info */}
+        <div className="max-w-3xl px-2 space-y-10 pb-20">
+          {/* Editable Info */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-xl font-semibold text-blue-700 mb-4">
-              Personal Information
+              Basic Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                ["Full Name", "name", "text"],
-                ["Date of Birth", "dob", "date"],
-                ["Gender", "gender", "text"],
-                ["Email", "email", "email"],
-                ["Phone", "phone", "text"],
-                ["Address", "address", "text"],
-              ].map(([label, key, type]) => (
-                <div
-                  key={key}
-                  className={key === "address" ? "col-span-2" : ""}
-                >
-                  <label className="block text-gray-600">{label}</label>
-                  <input
-                    type={type}
-                    value={personalInfo[key]}
-                    onChange={(e) => handleInputChange(e, "personal", key)}
-                    className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
-                    readOnly={!isEditing}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Health Info */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-semibold text-blue-700 mb-4">
-              Health Information
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                ["Medical History", "medicalHistory"],
-                ["Current Medications", "currentMedications"],
-                ["Allergies", "allergies"],
-                ["Family Medical History", "familyHistory"],
-                ["Vaccination Records", "vaccinations"],
-              ].map(([label, key]) => (
-                <div key={key}>
-                  <label className="block text-gray-600">{label}</label>
-                  <textarea
-                    value={healthInfo[key]}
-                    className="w-full p-3 mt-2 border rounded-lg bg-gray-100 text-gray-700"
-                    readOnly
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block text-gray-600">Full Name</label>
+                <input
+                  type="text"
+                  value={patientInfo.name || ""}
+                  onChange={(e) => handleInputChange(e, "name")}
+                  className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
+                  readOnly={!isEditing}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-600">Email</label>
+                <input
+                  type="email"
+                  value={patientInfo.email || ""}
+                  onChange={(e) => handleInputChange(e, "email")}
+                  className="w-full p-3 mt-2 border rounded-lg bg-gray-50"
+                  readOnly={!isEditing}
+                />
+              </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-start space-x-4">
             {!isEditing ? (
               <button
                 onClick={handleEditClick}

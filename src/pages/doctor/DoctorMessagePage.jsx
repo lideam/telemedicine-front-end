@@ -8,6 +8,7 @@ const MessagePage = () => {
   const messagesEndRef = useRef(null);
 
   const [doctorName, setDoctorName] = useState("");
+  const [appointmentId, setAppointmentId] = useState("");
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState(null);
@@ -27,6 +28,7 @@ const MessagePage = () => {
         if (!chatRes.ok) throw new Error("Failed to fetch chat");
 
         const chat = await chatRes.json();
+        setAppointmentId(chat.appointmentId); // Set appointmentId
 
         const doctorRes = await fetch(
           `http://127.0.0.1:5000/api/user/${chat.doctorId}`,
@@ -159,6 +161,38 @@ const MessagePage = () => {
     }
   };
 
+  const handleStartVideoCall = async () => {
+    if (!appointmentId) {
+      alert("Appointment ID not found.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/api/videoCall/appointment/${appointmentId}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to start video call");
+      }
+
+      const data = await res.json();
+      if (data.callUrl) {
+        window.open(data.callUrl, "_blank");
+      } else {
+        alert("Call URL not found.");
+      }
+    } catch (error) {
+      console.error("Error starting video call:", error);
+      alert("Error starting video call: " + error.message);
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -171,21 +205,23 @@ const MessagePage = () => {
           {doctorName || "Loading doctor..."}
         </div>
 
+        <div className="mb-4">
+          <button
+            onClick={handleStartVideoCall}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Start Video Call
+          </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-white rounded-xl shadow-inner border">
           {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${
-                msg.sender === "self" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-xs rounded-2xl p-3 text-sm ${
-                  msg.sender === "self"
-                    ? "bg-blue-100 text-right text-gray-800"
-                    : "bg-gray-200 text-left text-gray-800"
-                }`}
-              >
+            <div key={idx} className="flex justify-start">
+              <div className="max-w-md bg-gray-100 rounded-2xl p-4 text-base text-gray-800">
+                <div className="font-semibold text-sm text-gray-600 mb-2">
+                  {msg.sender === "self" ? "Me" : doctorName}
+                </div>
+
                 {msg.messageType === "text" && <div>{msg.text}</div>}
 
                 {msg.messageType === "image" && (
@@ -193,7 +229,7 @@ const MessagePage = () => {
                     <img
                       src={msg.content}
                       alt="attachment"
-                      className="max-w-[200px] rounded-lg border"
+                      className="max-w-[300px] rounded-lg border"
                     />
                   </div>
                 )}
@@ -213,10 +249,13 @@ const MessagePage = () => {
                   </div>
                 )}
 
-                <div className="text-xs text-gray-500 mt-1">{msg.time}</div>
+                <div className="text-sm text-gray-500 mt-2 text-right">
+                  {msg.time}
+                </div>
               </div>
             </div>
           ))}
+
           <div ref={messagesEndRef} />
         </div>
 

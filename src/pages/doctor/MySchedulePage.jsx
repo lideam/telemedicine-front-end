@@ -1,205 +1,200 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DoctorNav from "../../components/layout/DoctorNav";
-import {
-  CalendarDays,
-  Clock,
-  Bell,
-  BellOff,
-  Download,
-  Search,
-} from "lucide-react";
-import { FaCalendarCheck } from "react-icons/fa";
+import { FaCalendarAlt } from "react-icons/fa";
 
-const appointments = [
-  {
-    id: 1,
-    patientName: "Jane Doe",
-    date: "2025-04-26",
-    time: "10:00 AM",
-    condition: "Follow-up - Flu",
-    status: "Confirmed",
-  },
-  {
-    id: 2,
-    patientName: "Michael Smith",
-    date: "2025-04-26",
-    time: "2:00 PM",
-    condition: "Chest pain consultation",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    patientName: "Sarah Johnson",
-    date: "2025-04-27",
-    time: "9:00 AM",
-    condition: "Routine checkup",
-    status: "Confirmed",
-  },
-];
+const MySchedule = () => {
+  const [doctorId, setDoctorId] = useState(null);
+  const [schedule, setSchedule] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [patientsMap, setPatientsMap] = useState({});
+  const [loading, setLoading] = useState(true);
 
-const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  useEffect(() => {
+    const fetchScheduleAndAppointments = async () => {
+      const storedUserInfo = localStorage.getItem("userInfo");
+      if (!storedUserInfo) return;
 
-const MySchedulePage = () => {
-  const [availability, setAvailability] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [search, setSearch] = useState("");
+      const { user, token } = JSON.parse(storedUserInfo);
+      if (!user?._id) {
+        console.error("User ID missing in localStorage");
+        return;
+      }
 
-  const filteredAppointments = appointments.filter((appt) =>
-    appt.patientName.toLowerCase().includes(search.toLowerCase())
-  );
+      try {
+        // Fetch doctor data
+        const doctorRes = await fetch(
+          `http://localhost:5000/api/user/${user._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!doctorRes.ok) throw new Error("Failed to fetch doctor info");
+        const doctorData = await doctorRes.json();
+
+        setDoctorId(doctorData._id);
+
+        // Fetch schedule for doctor
+        const scheduleRes = await fetch(
+          `http://localhost:5000/api/schedule/user/${doctorData._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!scheduleRes.ok) throw new Error("Failed to fetch schedule");
+        const scheduleData = await scheduleRes.json();
+        setSchedule(scheduleData);
+
+        // Fetch appointments for doctor
+        const apptRes = await fetch(
+          `http://localhost:5000/api/appointment/doctor/${doctorData._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!apptRes.ok) throw new Error("Failed to fetch appointments");
+        const apptData = await apptRes.json();
+        setAppointments(apptData);
+
+        // Fetch patients info for appointment patientIds
+        const uniquePatientIds = [
+          ...new Set(apptData.map((a) => a.patientId)),
+        ].filter(Boolean);
+        const patientFetches = uniquePatientIds.map((pid) =>
+          fetch(`http://localhost:5000/api/user/${pid}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch patient ${pid}`);
+            return res.json();
+          })
+        );
+
+        const patientsData = await Promise.all(patientFetches);
+        const patientsMapTemp = {};
+        patientsData.forEach((p) => {
+          patientsMapTemp[p._id] = p;
+        });
+        setPatientsMap(patientsMapTemp);
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching schedule and appointments:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchScheduleAndAppointments();
+  }, []);
+
+  if (loading)
+    return <p className="p-6">Loading your schedule and appointments...</p>;
+
+  if (!schedule)
+    return (
+      <div className="p-6">
+        <p>No schedule found for your account.</p>
+      </div>
+    );
+
+  const daysOfWeek = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DoctorNav />
-      <main className="flex-1 p-6 pt-0 space-y-6 ml-64 overflow-y-auto">
-        {/* Header */}
-        <section className="bg-white p-4 -ml-6 -mr-6 shadow flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Left: Icon + Title */}
-          <div className="flex items-center gap-4">
-            <FaCalendarCheck className="text-blue-600 text-3xl" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">My Schedule</h1>
-              <p className="text-gray-600">
-                Manage your availability and appointments
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Controls */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Available:</label>
-              <button
-                onClick={() => setAvailability(!availability)}
-                className={`px-3 py-1 text-sm rounded-full ${
-                  availability
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-600"
-                }`}
-              >
-                {availability ? "Yes" : "No"}
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Notify:</label>
-              <button
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                {notificationsEnabled ? (
-                  <Bell size={20} />
-                ) : (
-                  <BellOff size={20} />
-                )}
-              </button>
-            </div>
-            <div>
-              <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
-                <Download size={16} />
-                Export
-              </button>
-            </div>
-          </div>
+      <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
+        <section className="bg-white p-4 flex items-center gap-4 shadow">
+          <FaCalendarAlt className="text-blue-600 text-3xl" />
+          <h1 className="text-2xl font-bold text-gray-800">
+            My Schedule & Appointments
+          </h1>
         </section>
 
-        {/* Weekly Calendar */}
-        <section className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <CalendarDays size={20} />
-            Weekly Calendar
-          </h2>
-          <div className="grid grid-cols-7 gap-4 text-center text-sm text-gray-700">
-            {daysOfWeek.map((day, i) => (
-              <div
-                key={i}
-                className="border p-2 rounded-lg bg-gray-50 shadow-sm"
-              >
-                <div className="font-semibold mb-2">{day}</div>
-                {appointments
-                  .filter((appt) => new Date(appt.date).getDay() === i)
-                  .map((appt) => (
-                    <div
-                      key={appt.id}
-                      className="bg-indigo-100 text-indigo-700 rounded px-2 py-1 mb-1 text-xs"
-                    >
-                      {appt.time} <br /> {appt.patientName}
-                    </div>
-                  ))}
-              </div>
+        {/* Weekly Schedule Display */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Weekly Schedule</h2>
+          <ul>
+            {daysOfWeek.map((day) => (
+              <li key={day} className="mb-2 capitalize">
+                <strong>{day}:</strong>{" "}
+                {schedule.weeklySchedule?.[day]?.length > 0
+                  ? schedule.weeklySchedule[day].join(", ")
+                  : "No slots"}
+              </li>
             ))}
-          </div>
+          </ul>
+        </section>
+
+        {/* Exceptions Display */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Exceptions</h2>
+          {schedule.exceptions?.length > 0 ? (
+            <ul>
+              {schedule.exceptions.map((ex, idx) => (
+                <li key={idx}>
+                  <strong>{ex.date.split("T")[0]}:</strong>{" "}
+                  {ex.timeSlots.join(", ")}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No exceptions.</p>
+          )}
+        </section>
+
+        {/* Session Info */}
+        <section className="bg-white p-6 rounded shadow max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Session Info</h2>
+          <p>
+            <strong>Duration:</strong> {schedule.sessionDuration} minutes
+          </p>
+          <p>
+            <strong>Price:</strong> ${schedule.sessionPrice.toFixed(2)}
+          </p>
         </section>
 
         {/* Upcoming Appointments */}
-        <section className="bg-white p-4 rounded-xl shadow space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-              <Clock size={20} />
-              Upcoming Appointments
-            </h2>
-            <div className="relative w-64">
-              <Search
-                className="absolute top-2.5 left-3 text-gray-400"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search patient..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg w-full text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-600">
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Upcoming Appointments</h2>
+          {appointments.length === 0 ? (
+            <p>No upcoming appointments.</p>
+          ) : (
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-gray-500 border-b">
-                  <th className="py-3 px-4">Patient</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Time</th>
-                  <th className="py-3 px-4">Condition</th>
-                  <th className="py-3 px-4">Status</th>
+                <tr>
+                  <th className="border-b p-2">Patient</th>
+                  <th className="border-b p-2">Date & Time</th>
+                  <th className="border-b p-2">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredAppointments.length > 0 ? (
-                  filteredAppointments.map((appt) => (
-                    <tr key={appt.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-800">
-                        {appt.patientName}
+                {appointments.map((appt) => {
+                  const patient = patientsMap[appt.patientId];
+                  return (
+                    <tr key={appt._id} className="border-b">
+                      <td className="p-2">
+                        {patient
+                          ? `${patient.firstName} ${patient.lastName}`
+                          : "Unknown Patient"}
                       </td>
-                      <td className="py-3 px-4">{appt.date}</td>
-                      <td className="py-3 px-4">{appt.time}</td>
-                      <td className="py-3 px-4">{appt.condition}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            appt.status === "Confirmed"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {appt.status}
-                        </span>
+                      <td className="p-2">
+                        {new Date(appt.appointmentDate).toLocaleString()}
+                      </td>
+                      <td className="p-2 capitalize">
+                        {appt.appointmentStatus}
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="text-center py-6 text-gray-500">
-                      No appointments found.
-                    </td>
-                  </tr>
-                )}
+                  );
+                })}
               </tbody>
             </table>
-          </div>
+          )}
         </section>
       </main>
     </div>
   );
 };
 
-export default MySchedulePage;
+export default MySchedule;
