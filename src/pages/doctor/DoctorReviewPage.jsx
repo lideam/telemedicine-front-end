@@ -6,38 +6,38 @@ import DoctorNav from "../../components/layout/DoctorNav";
 const patientReviews = [
   {
     id: 1,
-    name: "Emily Carter",
+    name: "Betelhem Abrham",
     rating: 5,
-    comment: "Dr. Smith was extremely kind and explained everything clearly.",
+    comment: "Dr. Mahider was extremely kind and explained everything clearly.",
     date: "April 25, 2025",
     appointmentType: "General Checkup",
-    image: "https://randomuser.me/api/portraits/women/3.jpg",
+    image: "",
   },
   {
     id: 2,
-    name: "Michael Brown",
+    name: "Eden Solomon",
     rating: 4,
     comment: "Good consultation, minor wait time.",
     date: "April 20, 2025",
     appointmentType: "Cardiology",
-    image: "https://randomuser.me/api/portraits/men/4.jpg",
+    image: "",
   },
 ];
 
 const otherDoctors = [
   {
     id: 3,
-    name: "Dr. Anna Taylor",
+    name: "Dr. Abebe Belete",
     specialty: "Neurologist",
     rating: 4.8,
-    image: "https://randomuser.me/api/portraits/women/5.jpg",
+    image: "",
   },
   {
     id: 4,
-    name: "Dr. Robert King",
+    name: "Dr. Samuel Belachew",
     specialty: "Endocrinologist",
     rating: 4.5,
-    image: "https://randomuser.me/api/portraits/men/5.jpg",
+    image: "",
   },
 ];
 
@@ -54,32 +54,50 @@ const DoctorReviews = () => {
           <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
             <FaStar className="text-blue-600 text-3xl" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Patient Reviews</h1>
-              <p className="text-gray-600 mt-1">See how your patients feel about you</p>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Patient Reviews
+              </h1>
+              <p className="text-gray-600 mt-1">
+                See how your patients feel about you
+              </p>
             </div>
           </section>
 
           {/* Reviews List */}
           <section className="bg-white p-6 rounded-2xl shadow-md space-y-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">Ratings from Your Patients</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">
+              Ratings from Your Patients
+            </h2>
             {patientReviews.map((review) => (
               <motion.div
                 key={review.id}
                 whileHover={{ scale: 1.02 }}
                 className="bg-gray-50 p-5 rounded-xl shadow-sm flex flex-col md:flex-row gap-6"
               >
-                <img src={review.image} alt={review.name} className="w-16 h-16 rounded-full object-cover" />
+                <img
+                  src={review.image}
+                  alt={review.name}
+                  className="w-16 h-16 rounded-full object-cover"
+                />
                 <div className="flex-1 space-y-1">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-800">{review.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      {review.name}
+                    </h3>
                     <p className="text-sm text-gray-500">{review.date}</p>
                   </div>
-                  <p className="text-sm text-blue-600">{review.appointmentType}</p>
+                  <p className="text-sm text-blue-600">
+                    {review.appointmentType}
+                  </p>
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <FaStar
                         key={i}
-                        className={`h-5 w-5 ${i <= review.rating ? "text-yellow-400" : "text-gray-300"}`}
+                        className={`h-5 w-5 ${
+                          i <= review.rating
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }`}
                       />
                     ))}
                   </div>
@@ -105,7 +123,9 @@ const DoctorReviews = () => {
 
           {/* Other Doctors Section */}
           <section className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700">Other Top Rated Doctors</h2>
+            <h2 className="text-xl font-semibold text-gray-700">
+              Other Top Rated Doctors
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {otherDoctors.map((doc) => (
                 <motion.div
@@ -124,7 +144,11 @@ const DoctorReviews = () => {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <FaStar
                         key={i}
-                        className={`h-4 w-4 ${i <= Math.round(doc.rating) ? "text-yellow-400" : "text-gray-300"}`}
+                        className={`h-4 w-4 ${
+                          i <= Math.round(doc.rating)
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }`}
                       />
                     ))}
                   </div>

@@ -151,7 +151,7 @@ const MySchedule = () => {
             <strong>Duration:</strong> {schedule.sessionDuration} minutes
           </p>
           <p>
-            <strong>Price:</strong> ${schedule.sessionPrice.toFixed(2)}
+            <strong>Price:</strong> {schedule.sessionPrice.toFixed(2)}
           </p>
         </section>
 

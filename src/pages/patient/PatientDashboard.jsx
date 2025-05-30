@@ -50,7 +50,7 @@ const PatientDashboard = () => {
   const [appointments] = useState([
     {
       id: 1,
-      doctorName: "Dr. John Doe",
+      doctorName: "Dr. Mahider Anmut",
       specialty: "Cardiologist",
       date: "2025-04-20",
       time: "10:30 AM",
@@ -58,7 +58,7 @@ const PatientDashboard = () => {
     },
     {
       id: 2,
-      doctorName: "Dr. Jane Smith",
+      doctorName: "Dr. Lidetu Amare",
       specialty: "Dermatologist",
       date: "2025-04-22",
       time: "1:00 PM",
@@ -111,8 +111,8 @@ const PatientDashboard = () => {
       <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
         <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
           <img
-            src="https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=600"
-            alt="Doctor"
+            src=""
+            alt="Profile"
             className="w-16 h-16 rounded-full object-cover border-2 border-blue-600"
           />
           <div>

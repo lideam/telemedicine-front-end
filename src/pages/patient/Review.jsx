@@ -1,4 +1,4 @@
-import { useState } from "react"; 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaStar, FaEdit, FaTrash } from "react-icons/fa";
 import { useEffect } from "react";
@@ -8,19 +8,19 @@ import PatientNav from "../../components/layout/PatientNav";
 const ratedDoctorsByPatient = [
   {
     id: 1,
-    name: "Dr. Alice Morgan",
+    name: "Dr. Mahider Anmut",
     specialty: "Cardiologist",
     rating: 4,
     comment: "Very attentive and helpful.",
-    image: "https://randomuser.me/api/portraits/women/1.jpg",
+    image: "",
   },
   {
     id: 2,
-    name: "Dr. John Doe",
+    name: "Dr. Lidetu Amare",
     specialty: "Dermatologist",
     rating: 5,
     comment: "Great experience. Listened carefully.",
-    image: "https://randomuser.me/api/portraits/men/1.jpg",
+    image: "",
   },
 ];
 
@@ -28,19 +28,19 @@ const ratedDoctorsByPatient = [
 const ratedDoctorsByOthers = [
   {
     id: 3,
-    name: "Dr. Sarah Lee",
+    name: "Dr. Leykun Birhanu",
     specialty: "Pediatrician",
     rating: 4.5,
     comment: "Amazing with kids!",
-    image: "https://randomuser.me/api/portraits/women/2.jpg",
+    image: "",
   },
   {
     id: 4,
-    name: "Dr. James Bond",
+    name: "Dr. Abebe Belete",
     specialty: "Orthopedic",
     rating: 4,
     comment: "Great knowledge and care.",
-    image: "https://randomuser.me/api/portraits/men/2.jpg",
+    image: "",
   },
 ];
 
@@ -66,7 +66,11 @@ const DoctorReviews = () => {
         setReviews(
           reviews.map((review) =>
             review.id === editingReview.id
-              ? { ...review, rating: newReview.rating, comment: newReview.comment }
+              ? {
+                  ...review,
+                  rating: newReview.rating,
+                  comment: newReview.comment,
+                }
               : review
           )
         );
@@ -79,7 +83,12 @@ const DoctorReviews = () => {
 
   const handleEdit = (review) => {
     setEditingReview(review);
-    setNewReview({ doctor: review.name, rating: review.rating, comment: review.comment, image: review.image });
+    setNewReview({
+      doctor: review.name,
+      rating: review.rating,
+      comment: review.comment,
+      image: review.image,
+    });
     setIsModalOpen(true);
     setIsBackgroundBlurred(true);
   };
@@ -102,22 +111,35 @@ const DoctorReviews = () => {
         <div className="fixed inset-0 z-30 backdrop-blur-sm bg-black/30"></div>
       )}
       <PatientNav />
-      <div className={`flex min-h-screen bg-gray-50 ${isBackgroundBlurred ? "blur-sm pointer-events-none select-none" : ""}`}>
+      <div
+        className={`flex min-h-screen bg-gray-50 ${
+          isBackgroundBlurred ? "blur-sm pointer-events-none select-none" : ""
+        }`}
+      >
         <main className="flex-1 p-6 pt-0 overflow-y-auto ml-64 space-y-6">
           <section className="bg-white p-3 pl-6 -ml-6 -mr-6 shadow-lg flex items-center gap-5">
-          <FaStar className="text-blue-600 text-4xl" />
+            <FaStar className="text-blue-600 text-4xl" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Your Doctor Reviews</h1>
-              <p className="text-gray-600 mt-1">Manage and update your reviews</p>
+              <h1 className="text-3xl font-bold text-gray-800">
+                Your Doctor Reviews
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage and update your reviews
+              </p>
             </div>
           </section>
 
           <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">Rated by You</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">
+              Rated by You
+            </h3>
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((r) => (
-                  <div key={r.id} className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+                  <div
+                    key={r.id}
+                    className="bg-white p-4 rounded-lg shadow flex items-center gap-4"
+                  >
                     <img
                       src={r.image}
                       alt={r.name}
@@ -130,7 +152,11 @@ const DoctorReviews = () => {
                         {[1, 2, 3, 4, 5].map((i) => (
                           <FaStar
                             key={i}
-                            className={`h-5 w-5 ${i <= r.rating ? "text-yellow-400" : "text-gray-400"}`}
+                            className={`h-5 w-5 ${
+                              i <= r.rating
+                                ? "text-yellow-400"
+                                : "text-gray-400"
+                            }`}
                           />
                         ))}
                       </div>
@@ -159,7 +185,9 @@ const DoctorReviews = () => {
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">Rated Doctors</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">
+              Rated Doctors
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {ratedDoctorsByOthers.map((doctor) => (
                 <div key={doctor.id} className="bg-white p-4 rounded-lg shadow">
@@ -174,7 +202,11 @@ const DoctorReviews = () => {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <FaStar
                         key={i}
-                        className={`h-5 w-5 ${i <= doctor.rating ? "text-yellow-400" : "text-gray-400"}`}
+                        className={`h-5 w-5 ${
+                          i <= doctor.rating
+                            ? "text-yellow-400"
+                            : "text-gray-400"
+                        }`}
                       />
                     ))}
                   </div>
@@ -189,7 +221,9 @@ const DoctorReviews = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-40 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 z-50">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">Edit Your Review</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">
+              Edit Your Review
+            </h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <img
@@ -208,7 +242,11 @@ const DoctorReviews = () => {
                 {[1, 2, 3, 4, 5].map((i) => (
                   <FaStar
                     key={i}
-                    className={`h-6 w-6 cursor-pointer ${i <= newReview.rating ? "text-yellow-400" : "text-gray-400"}`}
+                    className={`h-6 w-6 cursor-pointer ${
+                      i <= newReview.rating
+                        ? "text-yellow-400"
+                        : "text-gray-400"
+                    }`}
                     onClick={() => handleRating(i)}
                   />
                 ))}
@@ -216,7 +254,9 @@ const DoctorReviews = () => {
               <textarea
                 placeholder="Your feedback"
                 value={newReview.comment}
-                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, comment: e.target.value })
+                }
                 className="w-full p-2 border rounded-lg bg-gray-50 mb-4"
               />
               <div className="flex justify-between">

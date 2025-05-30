@@ -132,26 +132,22 @@ const AboutUs = () => {
           <h3 className="text-4xl font-semibold text-gray-800 mb-6">
             Meet Our Team
           </h3>
-          <p className="text-lg text-gray-600 mb-8">
-            Our experts are dedicated to providing high-quality virtual
-            healthcare, ensuring you receive top-tier medical advice and
-            support.
-          </p>
+
           <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-8 max-w-7xl mx-auto">
             {[
               {
-                name: "Dr. John Doe",
-                role: "Chief Medical Officer",
+                name: "Mahider Anmut",
+                role: "Developer",
                 img: "https://images.unsplash.com/photo-1602526210979-5f97b94b48f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
               },
               {
-                name: "Dr. Jane Smith",
-                role: "Mental Health Specialist",
+                name: "Lidetu Amare",
+                role: "Developer",
                 img: "https://images.unsplash.com/photo-1616766589040-89bc1b21519a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
               },
               {
-                name: "Dr. Sarah Lee",
-                role: "Pediatrician",
+                name: "Leykun Birhanu",
+                role: "Developer",
                 img: "https://images.unsplash.com/photo-1595422183560-2efbf5a53e8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
               },
             ].map((team, index) => (
@@ -169,13 +165,6 @@ const AboutUs = () => {
                   {team.name}
                 </h4>
                 <p className="text-gray-600">{team.role}</p>
-                <p className="text-gray-500 mt-4">
-                  {team.role === "Chief Medical Officer"
-                    ? "Bringing over 20 years of expertise in telemedicine innovation."
-                    : team.role === "Mental Health Specialist"
-                    ? "Dedicated to mental well-being, helping patients through online therapy."
-                    : "Ensuring children receive the best medical attention through virtual care."}
-                </p>
               </motion.div>
             ))}
           </div>

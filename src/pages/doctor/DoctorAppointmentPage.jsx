@@ -486,7 +486,9 @@ const DoctorAppointmentPage = () => {
             />
           </div>
           <div>
-            <label className="block mb-1 font-medium">Session Price ($):</label>
+            <label className="block mb-1 font-medium">
+              Session Price (ETB):
+            </label>
             <input
               type="number"
               step="0.01"
@@ -525,7 +527,7 @@ const DoctorAppointmentPage = () => {
                 {fetchedSchedule.sessionDuration} minutes
               </div>
               <div>
-                <strong>Session Price:</strong> $
+                <strong>Session Price: </strong>
                 {fetchedSchedule.sessionPrice.toFixed(2)}
               </div>
               <div>

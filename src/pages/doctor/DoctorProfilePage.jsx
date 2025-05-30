@@ -143,10 +143,7 @@ const DoctorProfilePage = () => {
           <div className="flex items-center space-x-6">
             <div className="relative">
               <img
-                src={
-                  profilePic ||
-                  "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=600"
-                }
+                src={profilePic || ""}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-blue-600 shadow-md"
               />
