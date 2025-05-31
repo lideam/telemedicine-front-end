@@ -8,6 +8,7 @@ import {
   FaPills,
 } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const Notifications = () => {
   const [notifs, setNotifs] = useState([]);
@@ -24,7 +25,7 @@ const Notifications = () => {
         }
 
         const res = await fetch(
-          `http://localhost:5000/api/notification/user/${user._id}`,
+          `${API_BASE_URL}/api/notification/user/${user._id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -107,16 +108,12 @@ const Notifications = () => {
                   <div className="flex-1">
                     <p
                       className={`text-sm ${
-                        n.read
-                          ? "text-gray-600"
-                          : "text-gray-800 font-medium"
+                        n.read ? "text-gray-600" : "text-gray-800 font-medium"
                       }`}
                     >
                       {n.message}
                     </p>
-                    <span className="text-xs text-gray-500">
-                      {n.timestamp}
-                    </span>
+                    <span className="text-xs text-gray-500">{n.timestamp}</span>
                   </div>
                 </motion.div>
               ))

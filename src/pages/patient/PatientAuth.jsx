@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import { Link } from "react-router-dom";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const PatientAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,8 +33,8 @@ const PatientAuth = () => {
     }
 
     const url = isLogin
-      ? "http://localhost:5000/api/auth/login"
-      : "http://localhost:5000/api/auth/register";
+      ? `${API_BASE_URL}/api/auth/login`
+      : `${API_BASE_URL}/api/auth/register`;
 
     const payload = isLogin
       ? {

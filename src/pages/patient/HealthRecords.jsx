@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FaSave, FaNotesMedical, FaEdit } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
 import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ProfilePage = () => {
   const initialState = {
@@ -36,7 +37,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem("token");
       try {
         const response = await axios.get(
-          `http://127.0.0.1:5000/api/healthRecord/user/${userId}`,
+          `${API_BASE_URL}/api/healthRecord/user/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -91,20 +92,17 @@ const ProfilePage = () => {
       let response;
       if (recordId) {
         // Update existing record via PUT
-        response = await fetch(
-          `http://127.0.0.1:5000/api/healthRecord/${recordId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        response = await fetch(`${API_BASE_URL}/api/healthRecord/${recordId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
       } else {
         // Create new record via POST
-        response = await fetch("http://127.0.0.1:5000/api/healthRecord", {
+        response = await fetch(`${API_BASE_URL}/api/healthRecord`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

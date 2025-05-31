@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaSave, FaEdit, FaUser } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ProfilePage = () => {
   const [patientInfo, setPatientInfo] = useState({
@@ -15,7 +16,7 @@ const ProfilePage = () => {
     const fetchPatientInfo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -53,17 +54,14 @@ const ProfilePage = () => {
 
       const payload = { firstName, lastName, email: patientInfo.email };
 
-      const res = await fetch(
-        `http://localhost:5000/api/user/${patientInfo._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/user/${patientInfo._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) throw new Error("Failed to update profile");
 

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Paperclip, Send, Download } from "lucide-react";
 import PatientNav from "../../components/layout/PatientNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const MessagePage = () => {
   const { id: chatId } = useParams();
@@ -21,17 +22,16 @@ const MessagePage = () => {
 
     const fetchDoctorFromChat = async () => {
       try {
-        const chatRes = await fetch(
-          `http://127.0.0.1:5000/api/chat/${chatId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const chatRes = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!chatRes.ok) throw new Error("Failed to fetch chat");
 
         const chat = await chatRes.json();
         setAppointmentId(chat.appointmentId);
 
         const doctorRes = await fetch(
-          `http://127.0.0.1:5000/api/user/${chat.doctorId}`,
+          `${API_BASE_URL}/api/user/${chat.doctorId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!doctorRes.ok) throw new Error("Failed to fetch doctor");
@@ -53,10 +53,9 @@ const MessagePage = () => {
 
     const fetchMessages = async () => {
       try {
-        const res = await fetch(
-          `http://127.0.0.1:5000/api/message/chat/${chatId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await fetch(`${API_BASE_URL}/api/message/chat/${chatId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) throw new Error("Failed to fetch messages");
 
         const data = await res.json();
@@ -98,7 +97,7 @@ const MessagePage = () => {
         const formData = new FormData();
         formData.append("file", file);
 
-        const uploadRes = await fetch("http://127.0.0.1:5000/api/upload", {
+        const uploadRes = await fetch("${API_BASE_URL}/api/upload", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
@@ -123,7 +122,7 @@ const MessagePage = () => {
         seenBy: [],
       };
 
-      const res = await fetch(`http://127.0.0.1:5000/api/message`, {
+      const res = await fetch(`${API_BASE_URL}/api/message`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -164,7 +163,7 @@ const MessagePage = () => {
   const handleStartVideoCall = async () => {
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/api/videoCall/appointment/${appointmentId}`,
+        `${API_BASE_URL}/api/videoCall/appointment/${appointmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

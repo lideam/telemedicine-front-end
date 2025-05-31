@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNav from "../../components/layout/AdminNav";
 import { Search, FileDown, PlusCircle } from "lucide-react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ManagePatients = () => {
   const [patients, setPatients] = useState([]);
@@ -20,14 +21,11 @@ const ManagePatients = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const response = await fetch(
-          "http://localhost:5000/api/user/role/patient",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/user/role/patient`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) throw new Error("Failed to fetch patients");
 
@@ -78,7 +76,7 @@ const ManagePatients = () => {
 
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/user", {
+      const response = await fetch(`${API_BASE_URL}/api/user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,13 +118,15 @@ const ManagePatients = () => {
   };
 
   const handleDeletePatient = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this patient?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this patient?"
+    );
     if (!confirmDelete) return;
 
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://localhost:5000/api/user/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -148,8 +148,12 @@ const ManagePatients = () => {
       <main className="flex-1 p-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Manage Patients</h1>
-            <p className="text-sm text-gray-500">View and manage registered patients</p>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Manage Patients
+            </h1>
+            <p className="text-sm text-gray-500">
+              View and manage registered patients
+            </p>
           </div>
           <div className="flex gap-3">
             <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
@@ -186,14 +190,23 @@ const ManagePatients = () => {
             </thead>
             <tbody>
               {filteredPatients.map((p) => (
-                <tr key={p._id} className="border-t hover:bg-gray-50 transition">
+                <tr
+                  key={p._id}
+                  className="border-t hover:bg-gray-50 transition"
+                >
                   <td className="px-6 py-4 font-medium">{p.name}</td>
                   <td className="px-6 py-4">{p.email}</td>
                   <td className="px-6 py-4 text-center space-x-3">
-                    <button className="text-blue-600 hover:text-blue-700" onClick={() => handleViewPatient(p._id)}>
+                    <button
+                      className="text-blue-600 hover:text-blue-700"
+                      onClick={() => handleViewPatient(p._id)}
+                    >
                       View
                     </button>
-                    <button className="text-red-600 hover:text-red-700" onClick={() => handleDeletePatient(p._id)}>
+                    <button
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeletePatient(p._id)}
+                    >
                       Delete
                     </button>
                   </td>
@@ -216,8 +229,12 @@ const ManagePatients = () => {
           <div className="bg-white p-8 rounded-xl w-1/3 shadow-lg">
             <h3 className="text-xl font-bold mb-4">Patient Details</h3>
             <div className="space-y-4">
-              <p><strong>Name:</strong> {selectedPatient.name}</p>
-              <p><strong>Email:</strong> {selectedPatient.email}</p>
+              <p>
+                <strong>Name:</strong> {selectedPatient.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedPatient.email}
+              </p>
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
@@ -241,31 +258,47 @@ const ManagePatients = () => {
                 className="w-full p-2 border rounded-lg"
                 placeholder="First Name"
                 value={newPatient.firstName}
-                onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
+                onChange={(e) =>
+                  setNewPatient({ ...newPatient, firstName: e.target.value })
+                }
               />
               <input
                 type="text"
                 className="w-full p-2 border rounded-lg"
                 placeholder="Last Name"
                 value={newPatient.lastName}
-                onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
+                onChange={(e) =>
+                  setNewPatient({ ...newPatient, lastName: e.target.value })
+                }
               />
               <input
                 type="email"
-                className={`w-full p-2 border rounded-lg ${errors.email ? "border-red-500" : ""}`}
+                className={`w-full p-2 border rounded-lg ${
+                  errors.email ? "border-red-500" : ""
+                }`}
                 placeholder="Email"
                 value={newPatient.email}
-                onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                onChange={(e) =>
+                  setNewPatient({ ...newPatient, email: e.target.value })
+                }
               />
-              {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-600 text-sm">{errors.email}</p>
+              )}
               <input
                 type="password"
-                className={`w-full p-2 border rounded-lg ${errors.password ? "border-red-500" : ""}`}
+                className={`w-full p-2 border rounded-lg ${
+                  errors.password ? "border-red-500" : ""
+                }`}
                 placeholder="Password"
                 value={newPatient.password}
-                onChange={(e) => setNewPatient({ ...newPatient, password: e.target.value })}
+                onChange={(e) =>
+                  setNewPatient({ ...newPatient, password: e.target.value })
+                }
               />
-              {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-600 text-sm">{errors.password}</p>
+              )}
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700"

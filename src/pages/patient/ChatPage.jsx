@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCommentDots } from "react-icons/fa";
 import PatientNav from "../../components/layout/PatientNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
@@ -20,14 +21,11 @@ const ChatPage = () => {
       }
 
       try {
-        const res = await fetch(
-          `http://127.0.0.1:5000/api/chat/user/${patientId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await fetch(`${API_BASE_URL}/api/chat/user/${patientId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!res.ok) throw new Error("Failed to fetch chats");
 

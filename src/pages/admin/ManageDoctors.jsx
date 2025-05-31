@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNav from "../../components/layout/AdminNav";
 import { Search, FileDown, PlusCircle } from "lucide-react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ManageDoctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -24,7 +25,7 @@ const ManageDoctors = () => {
         const token = localStorage.getItem("token");
 
         const doctorsResponse = await fetch(
-          "http://localhost:5000/api/user/role/doctor",
+          `${API_BASE_URL}/api/user/role/doctor`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -35,7 +36,7 @@ const ManageDoctors = () => {
         const doctorsData = await doctorsResponse.json();
 
         const profilesResponse = await fetch(
-          "http://localhost:5000/api/medicalProfile",
+          `${API_BASE_URL}/api/medicalProfile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -104,7 +105,7 @@ const ManageDoctors = () => {
 
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/user", {
+      const response = await fetch(`${API_BASE_URL}/api/user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -149,13 +150,15 @@ const ManageDoctors = () => {
   };
 
   const handleDeleteDoctor = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this doctor?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this doctor?"
+    );
     if (!confirmDelete) return;
 
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://localhost:5000/api/user/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -177,7 +180,9 @@ const ManageDoctors = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Manage Doctors</h1>
-            <p className="text-sm text-gray-500">View and manage registered doctors</p>
+            <p className="text-sm text-gray-500">
+              View and manage registered doctors
+            </p>
           </div>
           <div className="flex gap-3">
             <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
@@ -216,19 +221,30 @@ const ManageDoctors = () => {
             </thead>
             <tbody>
               {filteredDoctors.map((doc) => (
-                <tr key={doc._id} className="border-t hover:bg-gray-50 transition">
+                <tr
+                  key={doc._id}
+                  className="border-t hover:bg-gray-50 transition"
+                >
                   <td className="px-6 py-4 font-medium">{doc.name}</td>
                   <td className="px-6 py-4">{doc.specialty || "N/A"}</td>
                   <td className="px-6 py-4">{doc.clinic || "N/A"}</td>
                   <td className="px-6 py-4">
                     <div>{doc.email}</div>
-                    <div className="text-sm text-gray-500">{doc.phone || "N/A"}</div>
+                    <div className="text-sm text-gray-500">
+                      {doc.phone || "N/A"}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center space-x-3">
-                    <button className="text-blue-600 hover:text-blue-700" onClick={() => handleViewDoctor(doc._id)}>
+                    <button
+                      className="text-blue-600 hover:text-blue-700"
+                      onClick={() => handleViewDoctor(doc._id)}
+                    >
                       View
                     </button>
-                    <button className="text-red-600 hover:text-red-700" onClick={() => handleDeleteDoctor(doc._id)}>
+                    <button
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteDoctor(doc._id)}
+                    >
                       Delete
                     </button>
                   </td>
@@ -251,12 +267,26 @@ const ManageDoctors = () => {
           <div className="bg-white p-8 rounded-xl w-1/3 shadow-lg">
             <h3 className="text-xl font-bold mb-4">Doctor Details</h3>
             <div className="space-y-4">
-              <p><strong>Name:</strong> {selectedDoctor.name}</p>
-              <p><strong>Specialty:</strong> {selectedDoctor.specialty || "N/A"}</p>
-              <p><strong>Clinic:</strong> {selectedDoctor.clinic || "N/A"}</p>
-              <p><strong>Email:</strong> {selectedDoctor.email}</p>
-              <p><strong>Phone:</strong> {selectedDoctor.phone || "N/A"}</p>
-              {selectedDoctor.bio && <p><strong>Bio:</strong> {selectedDoctor.bio}</p>}
+              <p>
+                <strong>Name:</strong> {selectedDoctor.name}
+              </p>
+              <p>
+                <strong>Specialty:</strong> {selectedDoctor.specialty || "N/A"}
+              </p>
+              <p>
+                <strong>Clinic:</strong> {selectedDoctor.clinic || "N/A"}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedDoctor.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {selectedDoctor.phone || "N/A"}
+              </p>
+              {selectedDoctor.bio && (
+                <p>
+                  <strong>Bio:</strong> {selectedDoctor.bio}
+                </p>
+              )}
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
@@ -280,31 +310,43 @@ const ManageDoctors = () => {
                 className="w-full p-2 border rounded-lg"
                 placeholder="First Name"
                 value={newDoctor.firstName}
-                onChange={(e) => setNewDoctor({ ...newDoctor, firstName: e.target.value })}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, firstName: e.target.value })
+                }
               />
               <input
                 type="text"
                 className="w-full p-2 border rounded-lg"
                 placeholder="Last Name"
                 value={newDoctor.lastName}
-                onChange={(e) => setNewDoctor({ ...newDoctor, lastName: e.target.value })}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, lastName: e.target.value })
+                }
               />
               <input
                 type="email"
                 className="w-full p-2 border rounded-lg"
                 placeholder="Email"
                 value={newDoctor.email}
-                onChange={(e) => setNewDoctor({ ...newDoctor, email: e.target.value })}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, email: e.target.value })
+                }
               />
-              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email}</p>
+              )}
               <input
                 type="password"
                 className="w-full p-2 border rounded-lg"
                 placeholder="Password"
                 value={newDoctor.password}
-                onChange={(e) => setNewDoctor({ ...newDoctor, password: e.target.value })}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, password: e.target.value })
+                }
               />
-              {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-sm">{errors.password}</p>
+              )}
 
               <div className="flex justify-end gap-3 mt-4">
                 <button

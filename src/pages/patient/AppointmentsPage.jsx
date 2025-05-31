@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
 import { FaCalendarAlt } from "react-icons/fa";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const AppointmentsPage = () => {
       try {
         const token = localStorage.getItem("token"); // Or sessionStorage, based on your auth flow
         const response = await fetch(
-          "http://localhost:5000/api/user/all-available-doctors",
+          `${API_BASE_URL}/api/user/all-available-doctors`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -45,7 +46,7 @@ const AppointmentsPage = () => {
         const user = JSON.parse(localStorage.getItem("userInfo"));
 
         const response = await fetch(
-          `http://localhost:5000/api/appointment/patient/${user._id}`,
+          `${API_BASE_URL}/api/appointment/patient/${user._id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -83,7 +84,7 @@ const AppointmentsPage = () => {
     setSelectedSlot(null);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/schedule/user/${doctor._id}`,
+        `${API_BASE_URL}/api/schedule/user/${doctor._id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -150,148 +151,151 @@ const AppointmentsPage = () => {
     }
   };
 
-//   const sendNotification = async ({ title, message, userId }) => {
-//   try {
-//     const token = localStorage.getItem("token");
+  //   const sendNotification = async ({ title, message, userId }) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
 
-//     const response = await fetch("http://localhost:5000/api/notification", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: token ? `Bearer ${token}` : undefined,
-//       },
-//       body: JSON.stringify({
-//         title,
-//         message,
-//         userId,
-//         type: "system",
-//       }),
-//     });
+  //     const response = await fetch("http://localhost:5000/api/notification", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: token ? `Bearer ${token}` : undefined,
+  //       },
+  //       body: JSON.stringify({
+  //         title,
+  //         message,
+  //         userId,
+  //         type: "system",
+  //       }),
+  //     });
 
-//     const data = await response.json();
+  //     const data = await response.json();
 
-//     if (!response.ok) throw new Error(data.message || "Notification failed.");
+  //     if (!response.ok) throw new Error(data.message || "Notification failed.");
 
-//     console.log("Notification sent successfully.");
-//   } catch (error) {
-//     console.error("Failed to send notification:", error.message);
-//   }
-// };
+  //     console.log("Notification sent successfully.");
+  //   } catch (error) {
+  //     console.error("Failed to send notification:", error.message);
+  //   }
+  // };
 
   const handleRequestAppointment = () => {
-  if (!selectedDoctor || !selectedSlot) {
-    alert("Please select a doctor and a time slot.");
-    return;
-  }
+    if (!selectedDoctor || !selectedSlot) {
+      alert("Please select a doctor and a time slot.");
+      return;
+    }
 
-  const user = JSON.parse(localStorage.getItem("userInfo"));
-
-  const newAppointment = {
-    patientId: user._id,
-    doctorId: selectedDoctor._id,
-    title: "General Consultation",
-    sessionPrice: selectedDoctor.sessionPrice,
-    sessionDuration: selectedDoctor.sessionDuration,
-    sessionTime: selectedSlot.time, // ✅ this is the actual start time
-    appointmentDate: new Date(selectedSlot.date).toISOString(),
-    appointmentTime: selectedSlot.time,
-    appointmentStatus: "pending",
-  };
-
-  fetch("http://localhost:5000/api/appointment", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify(newAppointment),
-  })
-    .then((res) => res.json())
-    .then(async (data) => {
-      setAppointments([...appointments, data]);
-      setSelectedDoctor(null);
-      setSelectedSlot(null);
-      alert("Appointment requested! Awaiting doctor confirmation.");
-
-      // Send notification after successful appointment request
-      try {
-        const notificationPayload = {
-          title: "Appointment Requested",
-          message: "You have requested a new appointment. Waiting for confirmation.",
-          userId: user._id,
-          type: "system",
-        };
-
-        const notifResponse = await fetch("http://localhost:5000/api/notification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(notificationPayload),
-        });
-
-        const notifData = await notifResponse.json();
-
-        if (!notifResponse.ok) {
-          throw new Error(notifData.message || "Notification failed.");
-        }
-
-        console.log("Appointment request notification sent successfully.");
-      } catch (error) {
-        console.error("Failed to send notification:", error.message);
-      }
-    })
-    .catch((error) => {
-      console.error("Error requesting appointment:", error);
-      alert("Error requesting appointment.");
-    });
-};
-
- const handlePaymentNow = async (appointment) => {
-  try {
     const user = JSON.parse(localStorage.getItem("userInfo"));
-    const transactionId = `txn_${Date.now()}`;
 
-    localStorage.setItem("chapaTxnId", transactionId); // Store it
+    const newAppointment = {
+      patientId: user._id,
+      doctorId: selectedDoctor._id,
+      title: "General Consultation",
+      sessionPrice: selectedDoctor.sessionPrice,
+      sessionDuration: selectedDoctor.sessionDuration,
+      sessionTime: selectedSlot.time, // ✅ this is the actual start time
+      appointmentDate: new Date(selectedSlot.date).toISOString(),
+      appointmentTime: selectedSlot.time,
+      appointmentStatus: "pending",
+    };
 
-    const response = await fetch("http://localhost:5000/api/payment/initiate", {
+    fetch(`${API_BASE_URL}/api/appointment`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone || "0910000000",
-        appointmentId: appointment._id,
-        price: appointment.sessionPrice,
-        paymentType: "chapa",
-        transactionId: transactionId,
-      }),
-    });
+      body: JSON.stringify(newAppointment),
+    })
+      .then((res) => res.json())
+      .then(async (data) => {
+        setAppointments([...appointments, data]);
+        setSelectedDoctor(null);
+        setSelectedSlot(null);
+        alert("Appointment requested! Awaiting doctor confirmation.");
 
-    const data = await response.json();
+        // Send notification after successful appointment request
+        try {
+          const notificationPayload = {
+            title: "Appointment Requested",
+            message:
+              "You have requested a new appointment. Waiting for confirmation.",
+            userId: user._id,
+            type: "system",
+          };
 
-    if (data.status === "success" && data.data.checkout_url) {
-      window.location.href = data.data.checkout_url;
-       sendNotification({
-      title: "Payment Successful",
-      message: "Your payment has been received. Thank you!",
-      userId: user._id,
-    });
-    } else {
-      alert("Failed to initiate payment. Please try again.");
-      console.error("Payment Error:", data.message);
+          const notifResponse = await fetch(
+            `${API_BASE_URL}/api/notification`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify(notificationPayload),
+            }
+          );
+
+          const notifData = await notifResponse.json();
+
+          if (!notifResponse.ok) {
+            throw new Error(notifData.message || "Notification failed.");
+          }
+
+          console.log("Appointment request notification sent successfully.");
+        } catch (error) {
+          console.error("Failed to send notification:", error.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error requesting appointment:", error);
+        alert("Error requesting appointment.");
+      });
+  };
+
+  const handlePaymentNow = async (appointment) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("userInfo"));
+      const transactionId = `txn_${Date.now()}`;
+
+      localStorage.setItem("chapaTxnId", transactionId); // Store it
+
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone || "0910000000",
+          appointmentId: appointment._id,
+          price: appointment.sessionPrice,
+          paymentType: "chapa",
+          transactionId: transactionId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "success" && data.data.checkout_url) {
+        window.location.href = data.data.checkout_url;
+        sendNotification({
+          title: "Payment Successful",
+          message: "Your payment has been received. Thank you!",
+          userId: user._id,
+        });
+      } else {
+        alert("Failed to initiate payment. Please try again.");
+        console.error("Payment Error:", data.message);
+      }
+    } catch (err) {
+      console.error("Payment initiation failed:", err);
+      alert("Payment could not be started. Please try again.");
     }
-  } catch (err) {
-    console.error("Payment initiation failed:", err);
-    alert("Payment could not be started. Please try again.");
-  }
-};
-
+  };
 
   const handleReschedule = (appointmentId) => {
     const appointment = appointments.find((a) => a._id === appointmentId);
@@ -304,11 +308,11 @@ const AppointmentsPage = () => {
       );
       setSelectedSlot({ date: appointment.date, time: appointment.time });
       alert("Please choose a new time slot and request again.");
-       sendNotification({
-      title: "Appointment Declined",
-      message: "Your appointment has been declined by the doctor.",
-      userId: user._id,
-    });
+      sendNotification({
+        title: "Appointment Declined",
+        message: "Your appointment has been declined by the doctor.",
+        userId: user._id,
+      });
     }
   };
 
@@ -317,48 +321,47 @@ const AppointmentsPage = () => {
   };
 
   const checkPaymentStatus = async (appointmentId) => {
-  try {
-    const response = await fetch(
-      `http://localhost:5000/api/payment/check-status/appointment/${appointmentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-
-    if (!response.ok) throw new Error("Failed to check payment status");
-
-    const data = await response.json();
-
-    if (data.status === "success") {
-      setAppointments((prevAppointments) =>
-        prevAppointments.map((appt) =>
-          appt._id === appointmentId
-            ? { ...appt, paymentStatus: "Paid" }
-            : appt
-        )
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/payment/check-status/appointment/${appointmentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
-       sendNotification({
-      title: "Payment Successful",
-      message: "Your payment has been received. Thank you!",
-      userId: user._id,
-    });
+
+      if (!response.ok) throw new Error("Failed to check payment status");
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        setAppointments((prevAppointments) =>
+          prevAppointments.map((appt) =>
+            appt._id === appointmentId
+              ? { ...appt, paymentStatus: "Paid" }
+              : appt
+          )
+        );
+        sendNotification({
+          title: "Payment Successful",
+          message: "Your payment has been received. Thank you!",
+          userId: user._id,
+        });
+      }
+    } catch (err) {
+      console.error("Error checking payment status:", err);
     }
-  } catch (err) {
-    console.error("Error checking payment status:", err);
-  }
-};
-useEffect(() => {
-  const interval = setInterval(() => {
-    appointments
-      .filter((appt) => appt.paymentStatus === "Pending")
-      .forEach((appt) => checkPaymentStatus(appt._id));
-  }, 3500); // check every 3.5 seconds
+  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      appointments
+        .filter((appt) => appt.paymentStatus === "Pending")
+        .forEach((appt) => checkPaymentStatus(appt._id));
+    }, 3500); // check every 3.5 seconds
 
-  return () => clearInterval(interval); // cleanup on unmount
-}, [appointments]);
-
+    return () => clearInterval(interval); // cleanup on unmount
+  }, [appointments]);
 
   return (
     <div className="flex min-h-screen bg-gray-50 relative">
@@ -518,39 +521,38 @@ useEffect(() => {
                   {appointment.appointmentStatus || "N/A"}
                 </p>
                 {appointment.appointmentStatus === "Declined" ? (
-  <button
-    onClick={() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      handleReschedule(appointment._id);
-    }}
-    className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
-  >
-    Reschedule
-  </button>
-) : (
-  <p
-    className={`font-semibold ${
-      appointment.paymentStatus === "Paid"
-        ? "text-green-600"
-        : "text-yellow-600"
-    }`}
-  >
-    <strong>Payment:</strong> {appointment.paymentStatus || "Pending"}
-  </p>
-)}
-
+                  <button
+                    onClick={() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      handleReschedule(appointment._id);
+                    }}
+                    className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Reschedule
+                  </button>
+                ) : (
+                  <p
+                    className={`font-semibold ${
+                      appointment.paymentStatus === "Paid"
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    }`}
+                  >
+                    <strong>Payment:</strong>{" "}
+                    {appointment.paymentStatus || "Pending"}
+                  </p>
+                )}
 
                 {/* Pay Now */}
                 {appointment.appointmentStatus === "Confirmed" &&
-  appointment.paymentStatus === "Pending" && (
-    <button
-      onClick={() => handlePaymentNow(appointment)}
-      className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
-    >
-      Pay Now
-    </button>
-)}
-
+                  appointment.paymentStatus === "Pending" && (
+                    <button
+                      onClick={() => handlePaymentNow(appointment)}
+                      className="mt-2 px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Pay Now
+                    </button>
+                  )}
 
                 {/* Chat Access */}
                 {appointment.status === "Confirmed" &&
@@ -577,8 +579,6 @@ useEffect(() => {
             ))
           )}
         </div>
-
-       
       </main>
     </div>
   );

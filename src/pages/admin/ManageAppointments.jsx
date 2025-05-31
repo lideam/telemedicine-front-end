@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNav from "../../components/layout/AdminNav";
 import { Search, Eye, FileDown, X } from "lucide-react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ManageAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -14,14 +15,11 @@ const ManageAppointments = () => {
     const fetchPatients = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:5000/api/user/role/patient",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/user/role/patient`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) throw new Error("Failed to fetch patients");
         const data = await response.json();
         const formattedPatients = data.map((p) => ({
@@ -41,14 +39,11 @@ const ManageAppointments = () => {
     const fetchDoctors = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:5000/api/user/role/doctor",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/user/role/doctor`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) throw new Error("Failed to fetch doctors");
         const data = await response.json();
         const formattedDoctors = data.map((d) => ({
@@ -68,14 +63,11 @@ const ManageAppointments = () => {
     const fetchAppointments = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:5000/api/appointment",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/appointment`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) throw new Error("Failed to fetch appointments");
         const data = await response.json();
         setAppointments(data);
@@ -171,7 +163,9 @@ const ManageAppointments = () => {
                   <td className="px-6 py-4 font-medium">
                     {getPatientName(appointment.patientId)}
                   </td>
-                  <td className="px-6 py-4">{getDoctorName(appointment.doctorId)}</td>
+                  <td className="px-6 py-4">
+                    {getDoctorName(appointment.doctorId)}
+                  </td>
                   <td className="px-6 py-4">
                     {formatDateOnly(appointment.appointmentDate)}
                   </td>

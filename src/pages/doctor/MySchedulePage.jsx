@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DoctorNav from "../../components/layout/DoctorNav";
 import { FaCalendarAlt } from "react-icons/fa";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const MySchedule = () => {
   const [doctorId, setDoctorId] = useState(null);
@@ -22,12 +23,9 @@ const MySchedule = () => {
 
       try {
         // Fetch doctor data
-        const doctorRes = await fetch(
-          `http://localhost:5000/api/user/${user._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const doctorRes = await fetch(`${API_BASE_URL}/api/user/${user._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!doctorRes.ok) throw new Error("Failed to fetch doctor info");
         const doctorData = await doctorRes.json();
 
@@ -35,7 +33,7 @@ const MySchedule = () => {
 
         // Fetch schedule for doctor
         const scheduleRes = await fetch(
-          `http://localhost:5000/api/schedule/user/${doctorData._id}`,
+          `${API_BASE_URL}/api/schedule/user/${doctorData._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!scheduleRes.ok) throw new Error("Failed to fetch schedule");
@@ -44,7 +42,7 @@ const MySchedule = () => {
 
         // Fetch appointments for doctor
         const apptRes = await fetch(
-          `http://localhost:5000/api/appointment/doctor/${doctorData._id}`,
+          `${API_BASE_URL}/api/appointment/doctor/${doctorData._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!apptRes.ok) throw new Error("Failed to fetch appointments");
@@ -56,7 +54,7 @@ const MySchedule = () => {
           ...new Set(apptData.map((a) => a.patientId)),
         ].filter(Boolean);
         const patientFetches = uniquePatientIds.map((pid) =>
-          fetch(`http://localhost:5000/api/user/${pid}`, {
+          fetch(`${API_BASE_URL}/api/user/${pid}`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             if (!res.ok) throw new Error(`Failed to fetch patient ${pid}`);

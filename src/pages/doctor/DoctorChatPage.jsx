@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaComments } from "react-icons/fa";
 import DoctorNav from "../../components/layout/DoctorNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const DoctorChatPage = () => {
   const [chats, setChats] = useState([]);
@@ -30,7 +31,7 @@ const DoctorChatPage = () => {
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:5000/api/chat/user/${doctorId}`,
+          `${API_BASE_URL}/api/chat/user/${doctorId}`,
           {
             method: "GET",
             headers: {

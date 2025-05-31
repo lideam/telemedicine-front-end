@@ -4,10 +4,11 @@ import {
   FaCheckCircle,
   FaUndoAlt,
   FaDownload,
-  FaCreditCard
+  FaCreditCard,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import PatientNav from "../../components/layout/PatientNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const TransactionHistoryPage = () => {
   const [transactions, setTransactions] = useState([]);
@@ -16,7 +17,6 @@ const TransactionHistoryPage = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewedTransaction, setViewedTransaction] = useState(null);
 
-  const API_BASE_URL = "http://localhost:5000";
   const user = JSON.parse(localStorage.getItem("userInfo"));
   const userId = user?._id;
   const token = localStorage.getItem("token");
@@ -47,9 +47,9 @@ const TransactionHistoryPage = () => {
     fetchTransactions();
   }, [userId, token]);
 
- const handleDownloadReceipt = async (transaction) => {
-  // 1. Generate and download the receipt
-  const receiptContent = `
+  const handleDownloadReceipt = async (transaction) => {
+    // 1. Generate and download the receipt
+    const receiptContent = `
     Medical Appointment Receipt
     ---------------------------
     Appointment ID: ${transaction.appointmentId}
@@ -57,51 +57,51 @@ const TransactionHistoryPage = () => {
     Status: ${transaction.status}
     Amount Paid: ${transaction.price} Birr
     Payment Method: ${transaction.paymentType}
-    Date: ${new Date(transaction.updatedAt || transaction.createdAt || Date.now()).toLocaleString()}
+    Date: ${new Date(
+      transaction.updatedAt || transaction.createdAt || Date.now()
+    ).toLocaleString()}
   `;
 
-  const blob = new Blob([receiptContent], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `receipt_${transaction.transactionId}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+    const blob = new Blob([receiptContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `receipt_${transaction.transactionId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
 
-  // 2. Send notification to backend
-  try {
-    const user = JSON.parse(localStorage.getItem("userInfo"));
-    const token = localStorage.getItem("token");
+    // 2. Send notification to backend
+    try {
+      const user = JSON.parse(localStorage.getItem("userInfo"));
+      const token = localStorage.getItem("token");
 
-    const notificationPayload = {
-      title: "Receipt Downloaded",
-      message: `You downloaded the receipt for appointment ${transaction.appointmentId}`,
-      userId: user._id,
-      type: "system",
-    };
+      const notificationPayload = {
+        title: "Receipt Downloaded",
+        message: `You downloaded the receipt for appointment ${transaction.appointmentId}`,
+        userId: user._id,
+        type: "system",
+      };
 
-    const response = await fetch("http://localhost:5000/api/notification", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // optional if backend requires
-      },
-      body: JSON.stringify(notificationPayload),
-    });
+      const response = await fetch(`${API_BASE_URL}/api/notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // optional if backend requires
+        },
+        body: JSON.stringify(notificationPayload),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || "Notification failed.");
+      if (!response.ok) {
+        throw new Error(data.message || "Notification failed.");
+      }
+
+      console.log("Notification sent successfully.");
+    } catch (error) {
+      console.error("Failed to send notification:", error.message);
     }
-
-    console.log("Notification sent successfully.");
-  } catch (error) {
-    console.error("Failed to send notification:", error.message);
-  }
-};
-
-
+  };
 
   const handleViewAppointment = (transaction) => {
     setViewedTransaction(transaction);
@@ -203,9 +203,7 @@ const TransactionHistoryPage = () => {
                   <div className="flex flex-wrap gap-2 justify-end">
                     {transaction.status === "success" ? (
                       <button
-                        onClick={() =>
-                          handleDownloadReceipt(transaction)
-                        }
+                        onClick={() => handleDownloadReceipt(transaction)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
                       >
                         <FaDownload className="inline mr-2" />
@@ -239,11 +237,23 @@ const TransactionHistoryPage = () => {
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Appointment Details
               </h2>
-              <p><strong>Appointment ID:</strong> {viewedTransaction.appointmentId}</p>
-              <p><strong>Transaction ID:</strong> {viewedTransaction.transactionId}</p>
-              <p><strong>Status:</strong> {viewedTransaction.status}</p>
-              <p><strong>Amount:</strong> {viewedTransaction.price} Birr</p>
-              <p><strong>Payment Method:</strong> {viewedTransaction.paymentType}</p>
+              <p>
+                <strong>Appointment ID:</strong>{" "}
+                {viewedTransaction.appointmentId}
+              </p>
+              <p>
+                <strong>Transaction ID:</strong>{" "}
+                {viewedTransaction.transactionId}
+              </p>
+              <p>
+                <strong>Status:</strong> {viewedTransaction.status}
+              </p>
+              <p>
+                <strong>Amount:</strong> {viewedTransaction.price} Birr
+              </p>
+              <p>
+                <strong>Payment Method:</strong> {viewedTransaction.paymentType}
+              </p>
 
               <div className="flex justify-end pt-4">
                 <button

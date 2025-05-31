@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaCamera, FaSave, FaEdit, FaUser } from "react-icons/fa";
 import DoctorNav from "../../components/layout/DoctorNav";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const DoctorProfilePage = () => {
   const [doctorInfo, setDoctorInfo] = useState({
@@ -22,7 +23,7 @@ const DoctorProfilePage = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const authRes = await fetch("http://localhost:5000/api/auth/me", {
+        const authRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,7 +36,7 @@ const DoctorProfilePage = () => {
         const fullName = `${authData.firstName} ${authData.lastName}`;
 
         const profileRes = await fetch(
-          `http://localhost:5000/api/medicalProfile/user/${doctorId}`,
+          `${API_BASE_URL}/api/medicalProfile/user/${doctorId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -91,8 +92,8 @@ const DoctorProfilePage = () => {
 
       const method = doctorInfo.medicalProfileId ? "PUT" : "POST";
       const url = doctorInfo.medicalProfileId
-        ? `http://localhost:5000/api/medicalProfile/${doctorInfo.medicalProfileId}`
-        : `http://localhost:5000/api/medicalProfile`;
+        ? `${API_BASE_URL}/api/medicalProfile/${doctorInfo.medicalProfileId}`
+        : `${API_BASE_URL}/api/medicalProfile`;
 
       const response = await fetch(url, {
         method,

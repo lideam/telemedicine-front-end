@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DoctorNav from "../../components/layout/DoctorNav";
 import { FaCalendarAlt } from "react-icons/fa";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const DoctorAppointmentPage = () => {
   const initialScheduleState = {
@@ -43,15 +44,12 @@ const DoctorAppointmentPage = () => {
       }
 
       try {
-        const doctorRes = await fetch(
-          `http://localhost:5000/api/user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const doctorRes = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         const doctorData = await doctorRes.json();
 
@@ -60,7 +58,7 @@ const DoctorAppointmentPage = () => {
 
           // Fetch schedule
           const scheduleRes = await fetch(
-            `http://localhost:5000/api/schedule/user/${doctorData._id}`,
+            `${API_BASE_URL}/api/schedule/user/${doctorData._id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -75,7 +73,7 @@ const DoctorAppointmentPage = () => {
 
           // Fetch appointments
           const appointmentRes = await fetch(
-            `http://localhost:5000/api/appointment/doctor/${doctorData._id}`,
+            `${API_BASE_URL}/api/appointment/doctor/${doctorData._id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -92,7 +90,7 @@ const DoctorAppointmentPage = () => {
 
             // Fetch all patients in parallel
             const patientFetches = uniquePatientIds.map((pid) =>
-              fetch(`http://localhost:5000/api/user/${pid}`, {
+              fetch(`${API_BASE_URL}/api/user/${pid}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                   "Content-Type": "application/json",
@@ -219,8 +217,8 @@ const DoctorAppointmentPage = () => {
       // Save or update the main schedule
       const method = schedule._id ? "PUT" : "POST";
       const url = schedule._id
-        ? `http://localhost:5000/api/schedule/${schedule._id}`
-        : `http://localhost:5000/api/schedule`;
+        ? `${API_BASE_URL}/api/schedule/${schedule._id}`
+        : `${API_BASE_URL}/api/schedule`;
 
       const res = await fetch(url, {
         method,
@@ -243,7 +241,7 @@ const DoctorAppointmentPage = () => {
 
       // Now update weekly schedule explicitly
       await fetch(
-        `http://localhost:5000/api/schedule/update-weekly-schedule/${savedData._id}`,
+        `${API_BASE_URL}/api/schedule/update-weekly-schedule/${savedData._id}`,
         {
           method: "PUT",
           headers: {
@@ -260,7 +258,7 @@ const DoctorAppointmentPage = () => {
       for (const exception of savedData.exceptions) {
         if (exception._id) {
           await fetch(
-            `http://localhost:5000/api/schedule/update-exception-by-date/${savedData._id}`,
+            `${API_BASE_URL}/api/schedule/update-exception-by-date/${savedData._id}`,
             {
               method: "PUT",
               headers: {
@@ -295,7 +293,7 @@ const DoctorAppointmentPage = () => {
       const token = storedUserInfo ? JSON.parse(storedUserInfo).token : null;
 
       const response = await fetch(
-        `http://localhost:5000/api/appointment/update-status/${appointmentId}`,
+        `${API_BASE_URL}/api/appointment/update-status/${appointmentId}`,
         {
           method: "PUT",
           headers: {

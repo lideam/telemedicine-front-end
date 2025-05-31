@@ -1,6 +1,7 @@
-// src/pages/admin/AdminLogin.jsx
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const AdminLogin = () => {
       return;
     }
 
-    const url = "http://localhost:5000/api/auth/login";
+    const url = `${API_BASE_URL}/api/auth/login`;
 
     const payload = {
       email,

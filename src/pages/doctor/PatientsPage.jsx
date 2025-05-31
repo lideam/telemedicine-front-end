@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DoctorNav from "../../components/layout/DoctorNav";
 import { Dialog } from "@headlessui/react";
 import { FaUsers } from "react-icons/fa";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const PatientsPage = () => {
   const [appointments, setAppointments] = useState([]);
@@ -21,11 +22,14 @@ const PatientsPage = () => {
 
     const fetchAppointments = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/appointment/doctor/${doctorId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `${API_BASE_URL}/api/appointment/doctor/${doctorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!res.ok) throw new Error("Failed to fetch appointments");
 
@@ -40,7 +44,7 @@ const PatientsPage = () => {
         await Promise.all(
           patientIds.map(async (id) => {
             try {
-              const userRes = await fetch(`http://localhost:5000/api/user/${id}`, {
+              const userRes = await fetch(`${API_BASE_URL}/api/user/${id}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
@@ -90,7 +94,9 @@ const PatientsPage = () => {
             <FaUsers className="text-blue-600 text-3xl" />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Patients</h1>
-              <p className="text-gray-600 mt-1">Manage and explore your patients</p>
+              <p className="text-gray-600 mt-1">
+                Manage and explore your patients
+              </p>
             </div>
           </div>
 
@@ -181,7 +187,8 @@ const PatientsPage = () => {
                   <strong>Title:</strong> {selectedAppointment.title}
                 </p>
                 <p>
-                  <strong>Session Price:</strong> ${selectedAppointment.sessionPrice}
+                  <strong>Session Price:</strong> $
+                  {selectedAppointment.sessionPrice}
                 </p>
                 <p>
                   <strong>Session Duration:</strong>{" "}
@@ -189,14 +196,17 @@ const PatientsPage = () => {
                 </p>
                 <p>
                   <strong>Appointment Date:</strong>{" "}
-                  {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}
+                  {new Date(
+                    selectedAppointment.appointmentDate
+                  ).toLocaleDateString()}
                 </p>
                 <p>
                   <strong>Appointment Time:</strong>{" "}
                   {selectedAppointment.appointmentTime}
                 </p>
                 <p>
-                  <strong>Status:</strong> {selectedAppointment.appointmentStatus}
+                  <strong>Status:</strong>{" "}
+                  {selectedAppointment.appointmentStatus}
                 </p>
                 <p>
                   <strong>Created At:</strong>{" "}
